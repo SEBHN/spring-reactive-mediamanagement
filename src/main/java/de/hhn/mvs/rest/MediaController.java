@@ -31,6 +31,6 @@ public class MediaController {
 
     @PostMapping
     public ResponseEntity<Media> post(@RequestBody Media body) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null);
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(body);
     }
 }
