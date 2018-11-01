@@ -1,5 +1,6 @@
 package de.hhn.mvs.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,13 +12,17 @@ public final class MediaImpl implements Media {
     private String filePath;
     private List<Tag> tags;
 
+    public MediaImpl() {
+        // for jackson
+    }
+
     public MediaImpl(String id, String name, String file, String fileExtension, String filePath, Tag... tags) {
         this.id = id;
         this.name = name;
         this.file = file;
         this.fileExtension = fileExtension;
         this.filePath = filePath;
-        this.tags = Arrays.asList(tags);
+        this.tags = new ArrayList<>(Arrays.asList(tags));
     }
 
     @Override
