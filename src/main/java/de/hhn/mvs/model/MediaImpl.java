@@ -12,6 +12,10 @@ public final class MediaImpl implements Media {
     private String filePath;
     private List<Tag> tags;
 
+    public MediaImpl() {
+        // for jackson
+    }
+
     public MediaImpl(String id, String name, String file, String fileExtension, String filePath, Tag... tags) {
         this.id = id;
         this.name = name;
