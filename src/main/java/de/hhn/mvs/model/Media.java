@@ -1,10 +1,13 @@
 package de.hhn.mvs.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import java.util.List;
 
 /**
  * Media-metadata
  */
+@JsonDeserialize(as = MediaImpl.class)
 public interface Media {
 
     String getId();
