@@ -15,6 +15,7 @@ public class MediaRouter {
     @Bean
     public RouterFunction route(MediaHandler mediaHandler) {
         return RouterFunctions
-                .route(GET("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::get);
+                .route(GET("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::get)
+                .andRoute(GET("/users/{userId}/media").and(accept(APPLICATION_JSON)), mediaHandler::list);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -14,7 +15,12 @@ public class MediaHandler {
 
     public Mono<ServerResponse> get(ServerRequest request) {
         int id = Integer.parseInt(request.pathVariable("id"));
+        Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id));
+        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(media, Media.class);
+    }
 
-        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(Mono.just(MediaCreator.getInstance().getDummyMedia().get(id)), Media.class);
+    public Mono<ServerResponse> list(ServerRequest request) {
+        Flux<Media> medias = Flux.fromIterable(MediaCreator.getInstance().getDummyMedia());
+        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(medias, Media.class);
     }
 }
