@@ -29,4 +29,10 @@ public class MediaHandler {
         // TODO: returned saved person of repository with build instead of body // ServerResponse.ok().build(repository.save(media));
         return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).body(media, Media.class);
     }
+
+    public Mono<ServerResponse> download(ServerRequest request) {
+        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).body(null); // send file somehow
+    }
+
+
 }
