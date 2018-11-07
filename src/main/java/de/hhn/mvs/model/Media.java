@@ -16,9 +16,9 @@ public interface Media {
 
     void setName(String name);
 
-    String getFile();
+    String getFileId();
 
-    void setFile(String file);
+    void setFileId(String fileId);
 
     String getFileExtension();
 

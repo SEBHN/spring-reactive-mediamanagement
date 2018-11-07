@@ -4,6 +4,7 @@ import de.hhn.mvs.MediaCreator;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
+import de.hhn.mvs.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,13 +15,19 @@ import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+
+import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
+import static org.springframework.web.reactive.function.server.ServerResponse.created;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
 public class MediaHandler {
@@ -42,10 +49,14 @@ public class MediaHandler {
     public Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
         // TODO: returned saved media of repository with build instead of body // ServerResponse.ok().build(repository.save(media));
-        media.subscribe(
-                value -> mediaRepo.save((MediaImpl) value)
-        );
-        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).body(media, Media.class);
+        //Mono<Media> dbMedium;// = Mono.just(MediaCreator.getInstance().getDummyMedia().get(5));
+        return ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        fromPublisher(
+                                media.map(p -> new MediaImpl(p.getId(), p.getName(),
+                                        p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
+                                        .flatMap(mediaRepo::save), Media.class));
     }
 
     public Mono<ServerResponse> download(ServerRequest request) {

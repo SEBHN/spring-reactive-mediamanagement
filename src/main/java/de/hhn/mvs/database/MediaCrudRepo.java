@@ -24,7 +24,7 @@ public interface MediaCrudRepo
 
     Mono<MediaImpl> findMediaImplById (String id);
 
-    Mono<MediaImpl> save(MediaImpl medium);
+    Mono<Media> save(Media media);
 
     Flux<MediaImpl> findAll();
 

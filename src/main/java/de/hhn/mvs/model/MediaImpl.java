@@ -13,7 +13,7 @@ public final class MediaImpl implements Media {
     @Id
     private String id;
     private String name;
-    private String file;
+    private String fileId;
     private String fileExtension;
     private String filePath;
     private List<Tag> tags;
@@ -23,15 +23,19 @@ public final class MediaImpl implements Media {
     }
 
     public MediaImpl(String id, String name, String file, String fileExtension, String filePath, Tag... tags) {
-        this.id = id;
-        this.name = name;
-        this.file = file;
-        this.fileExtension = fileExtension;
-        this.filePath = filePath;
-        this.tags = new ArrayList<>(Arrays.asList(tags));
+        this(id, name, file, fileExtension, filePath, new ArrayList<>(Arrays.asList(tags)));
     }
 
-    @Override
+    public MediaImpl(String id, String name, String file, String fileExtension, String filePath, List<Tag> tags) {
+        this.id = id;
+        this.name = name;
+        this.fileId = file;
+        this.fileExtension = fileExtension;
+        this.filePath = filePath;
+        this.tags = tags;
+    }
+
+        @Override
     public String getId() {
         return id;
     }
@@ -47,13 +51,13 @@ public final class MediaImpl implements Media {
     }
 
     @Override
-    public String getFile() {
-        return file;
+    public String getFileId() {
+        return fileId;
     }
 
     @Override
-    public void setFile(String file) {
-        this.file = file;
+    public void setFileId(String file) {
+        this.fileId = file;
     }
 
     @Override
