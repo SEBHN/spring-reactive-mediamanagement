@@ -22,10 +22,15 @@ public interface MediaCrudRepo
 
     Mono<MediaImpl> findMediaImplById (String id);
 
+    //Mono<MediaImpl> save(MediaImpl medium);
     //.save()
+    //.findAll()
+    //Flux<MediaImpl> findAllByFolderName(String folderName);
     //https://www.baeldung.com/spring-data-mongodb-reactive
     //https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/reactive/ReactiveCrudRepository.html
 
+
+    //repeat for file
 
 
 
