@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.created;
@@ -48,13 +49,12 @@ public class MediaHandler {
 
     public Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
-        // TODO: returned saved media of repository with build instead of body // ServerResponse.ok().build(repository.save(media));
-        //Mono<Media> dbMedium;// = Mono.just(MediaCreator.getInstance().getDummyMedia().get(5));
+        UUID id = UUID.randomUUID();
         return ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         fromPublisher(
-                                media.map(p -> new MediaImpl(p.getId(), p.getName(),
+                                media.map(p -> new MediaImpl(id.toString(), p.getName(),
                                         p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
                                         .flatMap(mediaRepo::save), Media.class));
     }
