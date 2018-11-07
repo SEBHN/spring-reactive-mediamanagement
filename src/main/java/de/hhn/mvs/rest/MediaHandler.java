@@ -1,5 +1,6 @@
 package de.hhn.mvs.rest;
 
+import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.MediaCreator;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
@@ -7,12 +8,15 @@ import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Tag;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -67,6 +71,29 @@ public class MediaHandler {
     }
 
     public Mono<ServerResponse> download(ServerRequest request) {
+
+        /**
+        String id = request.pathVariable("id");
+        Mono<Media> media = mediaRepo.findById(id);
+        String fileId = "";
+
+
+        return ok()
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(
+                        BodyInserters.fromPublisher(
+                                media.map(p ->
+                                {
+                                    GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(p.getFileId())));
+                                    return file;
+
+                                })
+                                , FilePart.class));
+
+**/
+//        return ok().body(BodyInserters.fromPublisher(
+//                gridFsTemplate.findOne(new Query(Criteria.where("_id").is(fileId)))
+//        )); // send file somehow reactive way
         return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).body(null); // send file somehow reactive way
     }
 
@@ -89,11 +116,8 @@ public class MediaHandler {
             String fileIdString = fileId.toString();
 
 
-//            int id = Integer.parseInt(request.pathVariable("id")); // maybe use formdata-key instead of pathvariable?
             String id = request.pathVariable("id");
-//            Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id)); // TODO: get media of repository
             Mono<Media> media = mediaRepo.findById(id);
-            // TODO: store media and upload file in database
 
             return ok()
                     .contentType(MediaType.APPLICATION_JSON)
