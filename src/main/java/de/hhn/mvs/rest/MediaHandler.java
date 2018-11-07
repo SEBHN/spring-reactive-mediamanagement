@@ -1,39 +1,38 @@
 package de.hhn.mvs.rest;
 
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import de.hhn.mvs.MediaCreator;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
-import de.hhn.mvs.model.Tag;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.created;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
@@ -42,6 +41,9 @@ public class MediaHandler {
     @Autowired
     private MediaCrudRepo mediaRepo;
     private final GridFsTemplate gridFsTemplate;
+
+    @Autowired
+    private MongoDbFactory mongoDbFactory;
 
     @Autowired
     public MediaHandler(GridFsTemplate gridFsTemplate) {
@@ -72,29 +74,22 @@ public class MediaHandler {
 
     public Mono<ServerResponse> download(ServerRequest request) {
 
-        /**
         String id = request.pathVariable("id");
-        Mono<Media> media = mediaRepo.findById(id);
-        String fileId = "";
+        Mono<Media> mediaMono = mediaRepo.findById(id);
+
+        Mono<Resource> rs = mediaMono.map(media -> {
+            GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(media.getFileId())));
+
+            return new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
+
+        });
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromPublisher(rs, Resource.class));
+    }
 
 
-        return ok()
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(
-                        BodyInserters.fromPublisher(
-                                media.map(p ->
-                                {
-                                    GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(p.getFileId())));
-                                    return file;
-
-                                })
-                                , FilePart.class));
-
-**/
-//        return ok().body(BodyInserters.fromPublisher(
-//                gridFsTemplate.findOne(new Query(Criteria.where("_id").is(fileId)))
-//        )); // send file somehow reactive way
-        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).body(null); // send file somehow reactive way
+    private GridFSBucket getGridFsBucket() {
+        MongoDatabase db = mongoDbFactory.getDb();
+        return GridFSBuckets.create(db);
     }
 
     public Mono<ServerResponse> upload(ServerRequest request) {
