@@ -43,8 +43,9 @@ public class MediaHandler {
     }
 
     public Mono<ServerResponse> list(ServerRequest request) {
-        Flux<Media> medias = Flux.fromIterable(MediaCreator.getInstance().getDummyMedia());
-        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(medias, Media.class);
+        //Flux<Media> medias = Flux.fromIterable(MediaCreator.getInstance().getDummyMedia());
+        return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findAll(), Media.class);
+        //return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(medias, Media.class);
     }
 
     public Mono<ServerResponse> create(ServerRequest request) {

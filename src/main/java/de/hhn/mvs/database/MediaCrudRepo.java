@@ -15,7 +15,7 @@ import java.io.File;
 
 @Repository
 public interface MediaCrudRepo
-        extends ReactiveMongoRepository<MediaImpl, String> {
+        extends ReactiveMongoRepository<Media, String> {
 
 //    public void saveFile(File file, String mediaId);
 
@@ -26,7 +26,7 @@ public interface MediaCrudRepo
 
     Mono<Media> save(Media media);
 
-    Flux<MediaImpl> findAll();
+    Flux<Media> findAll();
 
     Flux<MediaImpl> findAllByFilePath(String filePath);
     //https://www.baeldung.com/spring-data-mongodb-reactive
