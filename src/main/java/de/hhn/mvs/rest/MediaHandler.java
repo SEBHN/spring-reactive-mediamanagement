@@ -37,15 +37,12 @@ public class MediaHandler {
     private MediaCrudRepo mediaRepo;
 
     public Mono<ServerResponse> get(ServerRequest request) {
-        int id = Integer.parseInt(request.pathVariable("id"));
-        Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id));
-        return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(media, Media.class);
+        String id = request.pathVariable("id").toString();
+        return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findById(id), Media.class);
     }
 
     public Mono<ServerResponse> list(ServerRequest request) {
-        //Flux<Media> medias = Flux.fromIterable(MediaCreator.getInstance().getDummyMedia());
         return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findAll(), Media.class);
-        //return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).contentType(MediaType.APPLICATION_JSON).body(medias, Media.class);
     }
 
     public Mono<ServerResponse> create(ServerRequest request) {
