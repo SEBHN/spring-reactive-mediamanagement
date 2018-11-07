@@ -1,7 +1,10 @@
 package de.hhn.mvs.rest;
 
 import de.hhn.mvs.MediaCreator;
+import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
+import de.hhn.mvs.model.MediaImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -22,6 +25,9 @@ import java.util.Map;
 @Component
 public class MediaHandler {
 
+    @Autowired
+    private MediaCrudRepo mediaRepo;
+
     public Mono<ServerResponse> get(ServerRequest request) {
         int id = Integer.parseInt(request.pathVariable("id"));
         Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id));
@@ -36,6 +42,9 @@ public class MediaHandler {
     public Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
         // TODO: returned saved media of repository with build instead of body // ServerResponse.ok().build(repository.save(media));
+        media.subscribe(
+                value -> mediaRepo.save((MediaImpl) value)
+        );
         return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).body(media, Media.class);
     }
 
@@ -63,6 +72,8 @@ public class MediaHandler {
             Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id)); // TODO: get media of repository
 
             // TODO: store media and upload file in database
+
+
 
             return ServerResponse.ok().body(media, Media.class);
         });

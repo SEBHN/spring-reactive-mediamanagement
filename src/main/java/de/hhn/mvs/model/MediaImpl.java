@@ -3,7 +3,6 @@ package de.hhn.mvs.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,4 +95,5 @@ public final class MediaImpl implements Media {
     public boolean removeTag(Tag tag) {
         return this.tags.remove(tag);
     }
+
 }
