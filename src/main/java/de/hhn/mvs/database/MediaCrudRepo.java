@@ -22,7 +22,9 @@ public interface MediaCrudRepo
 
     Mono<MediaImpl> findMediaImplById (String id);
 
-    
+    //.save()
+    //https://www.baeldung.com/spring-data-mongodb-reactive
+    //https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/reactive/ReactiveCrudRepository.html
 
 
 
