@@ -5,7 +5,9 @@ import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Tag;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -35,6 +37,13 @@ public class MediaHandler {
 
     @Autowired
     private MediaCrudRepo mediaRepo;
+    private final GridFsTemplate gridFsTemplate;
+
+    @Autowired
+    public MediaHandler(GridFsTemplate gridFsTemplate) {
+        this.gridFsTemplate = gridFsTemplate;
+    }
+
 
     public Mono<ServerResponse> get(ServerRequest request) {
         String id = request.pathVariable("id").toString();
@@ -66,25 +75,33 @@ public class MediaHandler {
 
             Map<String, Part> parameterFileMap = parts.toSingleValueMap();
             FilePart part = (FilePart) parameterFileMap.get("file");
-
+            ObjectId fileId = null;
             try {
                 Path upload = Files.createTempFile("mvs_", "_upload");
                 part.transferTo(upload.toFile());
+                fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
             } catch (IOException e) {
                 return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BodyInserters.fromObject(e.getMessage()));
             }
 
             String fileName = part.filename();
             String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+            String fileIdString = fileId.toString();
 
-            int id = Integer.parseInt(request.pathVariable("id")); // maybe use formdata-key instead of pathvariable?
-            Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id)); // TODO: get media of repository
 
+//            int id = Integer.parseInt(request.pathVariable("id")); // maybe use formdata-key instead of pathvariable?
+            String id = request.pathVariable("id");
+//            Mono<Media> media = Mono.just(MediaCreator.getInstance().getDummyMedia().get(id)); // TODO: get media of repository
+            Mono<Media> media = mediaRepo.findById(id);
             // TODO: store media and upload file in database
 
-
-
-            return ServerResponse.ok().body(media, Media.class);
+            return ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(
+                            fromPublisher(
+                                    media.map(p -> new MediaImpl(p.getId(), fileName,
+                                            fileIdString, fileExtension, p.getFilePath(), p.getTags()))
+                                            .flatMap(mediaRepo::save), Media.class));
         });
     }
 
