@@ -52,7 +52,7 @@ public class MediaHandler {
 
 
     public Mono<ServerResponse> get(ServerRequest request) {
-        String id = request.pathVariable("id").toString();
+        String id = request.pathVariable("id");
         return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findById(id), Media.class);
     }
 
@@ -97,7 +97,7 @@ public class MediaHandler {
 
             Map<String, Part> parameterFileMap = parts.toSingleValueMap();
             FilePart part = (FilePart) parameterFileMap.get("file");
-            ObjectId fileId = null;
+            ObjectId fileId;
             try {
                 Path upload = Files.createTempFile("mvs_", "_upload");
                 part.transferTo(upload.toFile());
