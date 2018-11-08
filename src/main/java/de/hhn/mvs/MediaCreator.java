@@ -40,9 +40,9 @@ public class MediaCreator {
 
     private Media createDummyMedia(int number) {
         if (number % 2 == 0) {
-            return new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat " + number, "cat.jpg", ".jpg", "", new Tag("1", "cats"), new Tag("3", "cute"));
+            return new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat " + number, "cat.jpg", ".jpg", "", new Tag("cats"), new Tag("cute"));
         } else {
-            return new MediaImpl(UUID.randomUUID().toString(), "My fabulous dog" + +number, "cat.jpg", ".jpg", "", new Tag("2", "dogs"));
+            return new MediaImpl(UUID.randomUUID().toString(), "My fabulous dog" + +number, "cat.jpg", ".jpg", "", new Tag("dogs"));
         }
 
     }

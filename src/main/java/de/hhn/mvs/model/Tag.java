@@ -3,24 +3,14 @@ package de.hhn.mvs.model;
 import java.util.Objects;
 
 public class Tag {
-    private String id;
     private String name;
 
     public Tag() {
         // for jackson
     }
 
-    public Tag(String id, String name) {
-        this.id = id;
+    public Tag(String name) {
         this.name = name;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -33,7 +23,7 @@ public class Tag {
 
     @Override
     public String toString() {
-        return "Tag: " + name + " (" + id + ")";
+        return "Tag: " + name;
     }
 
     @Override
@@ -41,12 +31,11 @@ public class Tag {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Tag tag = (Tag) o;
-        return Objects.equals(id, tag.id) &&
-                Objects.equals(name, tag.name);
+        return Objects.equals(name, tag.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name);
+        return Objects.hash(name);
     }
 }

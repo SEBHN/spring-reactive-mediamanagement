@@ -36,10 +36,10 @@ public class MediaHandlerTest {
 
     @Before
     public void setUp() {
-        Tag cats = new Tag("1", "cats");
-        Tag doge = new Tag("2", "doge");
-        Tag cute = new Tag("3", "cute");
-        Tag meme = new Tag("4", "meme");
+        Tag cats = new Tag("cats");
+        Tag doge = new Tag("doge");
+        Tag cute = new Tag("cute");
+        Tag meme = new Tag("meme");
 
         catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "cat.jpg", ".jpg", "", cats, cute);
         dogMedia = new MediaImpl(UUID.randomUUID().toString(), "Such Wow", "doge.jpg", ".jpg", "", doge, meme);
