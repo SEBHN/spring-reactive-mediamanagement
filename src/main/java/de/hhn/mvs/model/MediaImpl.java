@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Document
 public final class MediaImpl implements Media {
@@ -100,4 +101,33 @@ public final class MediaImpl implements Media {
         return this.tags.remove(tag);
     }
 
+    @Override
+    public String toString() {
+        return "Media{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", fileId='" + fileId + '\'' +
+                ", fileExtension='" + fileExtension + '\'' +
+                ", filePath='" + filePath + '\'' +
+                ", tags=" + tags +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MediaImpl media = (MediaImpl) o;
+        return Objects.equals(id, media.id) &&
+                Objects.equals(name, media.name) &&
+                Objects.equals(fileId, media.fileId) &&
+                Objects.equals(fileExtension, media.fileExtension) &&
+                Objects.equals(filePath, media.filePath) &&
+                Objects.equals(tags, media.tags);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, fileId, fileExtension, filePath, tags);
+    }
 }
