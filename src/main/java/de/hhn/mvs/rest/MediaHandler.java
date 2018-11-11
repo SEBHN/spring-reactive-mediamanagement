@@ -79,7 +79,6 @@ public class MediaHandler {
     }
 
     Mono<ServerResponse> download(ServerRequest request) {
-
         String id = request.pathVariable("id");
         Mono<Media> mediaMono = mediaRepo.findById(id);
 
