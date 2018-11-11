@@ -6,6 +6,7 @@ import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Tag;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +15,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -24,11 +29,13 @@ import java.util.UUID;
 public class MediaHandlerTest {
 
 
-    @Autowired
-    private MediaCrudRepo mediaRepo;
+    public static final int ANY_USER_ID = 1;
 
     @Autowired
+    private MediaCrudRepo mediaRepo;
+    @Autowired
     private WebTestClient webClient;
+
     private Media catMedia;
     private Mono<Media> catMediaSave;
     private Media dogMedia;
@@ -41,8 +48,8 @@ public class MediaHandlerTest {
         Tag cute = new Tag("cute");
         Tag meme = new Tag("meme");
 
-        catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "cat.jpg", ".jpg", "", cats, cute);
-        dogMedia = new MediaImpl(UUID.randomUUID().toString(), "Such Wow", "doge.jpg", ".jpg", "", doge, meme);
+        catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "123462345", ".jpg", "", cats, cute);
+        dogMedia = new MediaImpl(UUID.randomUUID().toString(), "Such Wow", "1337", ".jpg", "", doge, meme);
         catMediaSave = mediaRepo.save(catMedia);
         dogMediaSave = mediaRepo.save(dogMedia);
     }
@@ -56,7 +63,7 @@ public class MediaHandlerTest {
     @Test
     public void getExisting() {
         catMediaSave.block(); // ensure is saved to db
-        webClient.get().uri("/users/{userId}/media/{id}", 1, catMedia.getId()).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/users/{userId}/media/{id}", ANY_USER_ID, catMedia.getId()).accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -66,9 +73,50 @@ public class MediaHandlerTest {
 
     @Test
     public void getNotExisting() {
-        webClient.get().uri("/users/{userId}/media/{id}", 1, 1234567890).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/users/{userId}/media/{id}", ANY_USER_ID, 1234567890).accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    public void list() {
+        catMediaSave.block(); // ensure is saved to db
+        dogMediaSave.block();
+
+        webClient.get().uri("/users/{userId}/media", ANY_USER_ID).accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(Media.class)
+                .hasSize(2).contains(catMedia, dogMedia);
+    }
+
+    @Test
+    public void postValidMedia() {
+        webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(catMedia))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Media.class)
+                .consumeWith(returnedMediaResult -> {
+                    Media returnedMedia = returnedMediaResult.getResponseBody();
+                    assertNotEquals(null, returnedMedia);
+                    assertEquals(catMedia.getName(), returnedMedia.getName());
+                    assertEquals(catMedia.getTags(), returnedMedia.getTags());
+                    assertEquals(catMedia.getFileExtension(), returnedMedia.getFileExtension());
+                    assertEquals(catMedia.getFilePath(), returnedMedia.getFilePath());
+                });
+    }
+
+    @Test
+    @Ignore // remove @Ignore after #38 is solved
+    public void postInvalidMedia() {
+        webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(new Tag("something")))
+                .exchange()
+                .expectStatus().is4xxClientError();
     }
 
 }
