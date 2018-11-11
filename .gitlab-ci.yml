@@ -24,5 +24,10 @@ test:
   stage: test
   script:
     - ./gradlew check
+    - ./gradlew jacocoTestReport
+    - cat build/reports/jacoco/test/html/index.html
+  artifacts:
+    reports:
+      junit: build/test-results/test/TEST-*.xml
 after_script:
   - echo "End CI"

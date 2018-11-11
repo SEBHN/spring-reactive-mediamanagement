@@ -21,7 +21,6 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyExtractors;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
@@ -32,7 +31,10 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
+import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
@@ -40,10 +42,12 @@ public class MediaHandler {
 
     @Autowired
     private MediaCrudRepo mediaRepo;
-    private final GridFsTemplate gridFsTemplate;
-
     @Autowired
     private MongoDbFactory mongoDbFactory;
+
+    private final GridFsTemplate gridFsTemplate;
+
+
 
     @Autowired
     public MediaHandler(GridFsTemplate gridFsTemplate) {
@@ -51,19 +55,21 @@ public class MediaHandler {
     }
 
 
-    public Mono<ServerResponse> get(ServerRequest request) {
-        String id = request.pathVariable("id");
-        return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findById(id), Media.class);
+    Mono<ServerResponse> get(ServerRequest request) {
+        String mediaId = request.pathVariable("id");
+        return mediaRepo.findById(mediaId)
+                .flatMap(person -> ok().contentType(APPLICATION_JSON).body(fromObject(person)))
+                .switchIfEmpty(notFound().build());
     }
 
-    public Mono<ServerResponse> list(ServerRequest request) {
+    Mono<ServerResponse> list(ServerRequest request) {
         return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findAll(), Media.class);
     }
 
-    public Mono<ServerResponse> create(ServerRequest request) {
+    Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
         UUID id = UUID.randomUUID();
-        return ok()
+        return ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         fromPublisher(
@@ -72,8 +78,7 @@ public class MediaHandler {
                                         .flatMap(mediaRepo::save), Media.class));
     }
 
-    public Mono<ServerResponse> download(ServerRequest request) {
-
+    Mono<ServerResponse> download(ServerRequest request) {
         String id = request.pathVariable("id");
         Mono<Media> mediaMono = mediaRepo.findById(id);
 
@@ -92,7 +97,7 @@ public class MediaHandler {
         return GridFSBuckets.create(db);
     }
 
-    public Mono<ServerResponse> upload(ServerRequest request) {
+    Mono<ServerResponse> upload(ServerRequest request) {
         return request.body(BodyExtractors.toMultipartData()).flatMap(parts -> {
 
             Map<String, Part> parameterFileMap = parts.toSingleValueMap();
@@ -103,7 +108,7 @@ public class MediaHandler {
                 part.transferTo(upload.toFile());
                 fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
             } catch (IOException e) {
-                return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BodyInserters.fromObject(e.getMessage()));
+                return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
             }
 
             String fileName = part.filename();

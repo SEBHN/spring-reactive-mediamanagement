@@ -23,14 +23,14 @@ public final class MediaImpl implements Media {
         // for jackson
     }
 
-    public MediaImpl(String id, String name, String file, String fileExtension, String filePath, Tag... tags) {
-        this(id, name, file, fileExtension, filePath, new ArrayList<>(Arrays.asList(tags)));
+    public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, Tag... tags) {
+        this(id, name, fileId, fileExtension, filePath, new ArrayList<>(Arrays.asList(tags)));
     }
 
-    public MediaImpl(String id, String name, String file, String fileExtension, String filePath, List<Tag> tags) {
+    public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, List<Tag> tags) {
         this.id = id;
         this.name = name;
-        this.fileId = file;
+        this.fileId = fileId;
         this.fileExtension = fileExtension;
         this.filePath = filePath;
         this.tags = tags;
@@ -57,8 +57,8 @@ public final class MediaImpl implements Media {
     }
 
     @Override
-    public void setFileId(String file) {
-        this.fileId = file;
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
     }
 
     @Override
