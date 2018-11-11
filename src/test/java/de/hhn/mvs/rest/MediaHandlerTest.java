@@ -63,4 +63,12 @@ public class MediaHandlerTest {
                 .expectBody(Media.class)
                 .isEqualTo(catMedia);
     }
+
+    @Test
+    public void getNotExisting() {
+        webClient.get().uri("/users/{userId}/media/{id}", 1, 1234567890).accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
 }
