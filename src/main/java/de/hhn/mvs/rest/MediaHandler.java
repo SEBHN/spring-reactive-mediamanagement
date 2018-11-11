@@ -69,7 +69,7 @@ public class MediaHandler {
     Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
         UUID id = UUID.randomUUID();
-        return ok()
+        return ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         fromPublisher(
