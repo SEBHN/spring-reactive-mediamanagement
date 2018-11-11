@@ -4,17 +4,19 @@ import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Tag;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
@@ -29,12 +31,15 @@ import static org.junit.Assert.assertNotEquals;
 public class MediaHandlerTest {
 
 
-    public static final int ANY_USER_ID = 1;
+    private static final int ANY_USER_ID = 1;
 
     @Autowired
     private MediaCrudRepo mediaRepo;
     @Autowired
     private WebTestClient webClient;
+
+    @Rule
+    public TemporaryFolder folderRule = new TemporaryFolder();
 
     private Media catMedia;
     private Mono<Media> catMediaSave;
@@ -117,6 +122,39 @@ public class MediaHandlerTest {
                 .body(BodyInserters.fromObject(new Tag("something")))
                 .exchange()
                 .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    public void uploadValidFile() throws Exception {
+        String fileName = "uploadTest.txt";
+        FileSystemResource resource = new FileSystemResource(folderRule.newFile(fileName));
+        MultiValueMap<String, Object> multipartDataMap = new LinkedMultiValueMap<>();
+        multipartDataMap.set("file", resource);
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        assertNotEquals(null, mediaId);
+
+        webClient.post()
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Media.class)
+                .consumeWith(postedMediaResult -> {
+                    Media returnedMedia = postedMediaResult.getResponseBody();
+                    assertNotEquals(null, returnedMedia);
+                    assertEquals(fileName, returnedMedia.getName());
+                    assertNotEquals("", returnedMedia.getFileId());
+                });
+    }
+
+    private EntityExchangeResult<Media> createMedia(Media media) {
+        return webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(media))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Media.class).returnResult();
     }
 
 }
