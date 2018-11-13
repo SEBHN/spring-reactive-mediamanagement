@@ -9,9 +9,11 @@ import com.oracle.webservices.internal.api.message.ContentType;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
+import io.netty.handler.codec.DecoderException;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.Resource;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -83,9 +85,19 @@ public class MediaHandler {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         fromPublisher(
-                                media.map(p -> new MediaImpl(id.toString(), p.getName(),
-                                        p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
-                                        .flatMap(mediaRepo::save), Media.class));
+                                media.map(p ->
+                                        new MediaImpl(id.toString(), p.getName(),
+                                                p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
+                                        .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage()))
+                                        .flatMap(mediaRepo::save), Media.class)
+
+                )
+                .onErrorReturn(ServerResponse.badRequest().build().block())
+                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+
+                ;
+
     }
 
     Mono<ServerResponse> download(ServerRequest request) {
@@ -112,126 +124,57 @@ public class MediaHandler {
         String id = request.pathVariable("id");
         String fileKey = "file";
 
-    return request.body(
-                BodyExtractors.toMultipartData()
-        ).flatMap(parts -> {
+        return request.body(BodyExtractors.toMultipartData())
+                .flatMap(parts -> {
 
-            Map<String, Part> parameterFileMap = parts.toSingleValueMap();
-            if (!parameterFileMap.containsKey(fileKey)) {
-                return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
-            }
+                    Map<String, Part> parameterFileMap = parts.toSingleValueMap();
+                    if (!parameterFileMap.containsKey(fileKey)) {
+                        return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
+                    }
 
-            FilePart part = (FilePart) parameterFileMap.get(fileKey);
+                    FilePart part = (FilePart) parameterFileMap.get(fileKey);
 
-            ObjectId fileId;
-            try {
-                Path upload = Files.createTempFile("mvs_", "_upload");
-                part.transferTo(upload.toFile());
-                fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
-            } catch (IOException e) {
-                return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
-            }
+                    ObjectId fileId;
+                    try {
+                        Path upload = Files.createTempFile("mvs_", "_upload");
+                        part.transferTo(upload.toFile());
+                        fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
+                    } catch (IOException e) {
+                        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
+                    }
 
-            String fileName = part.filename();
-            String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
-            String fileIdString = fileId.toString();
+                    String fileName = part.filename();
+                    String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+                    String fileIdString = fileId.toString();
+
+                    Mono<Media> media = mediaRepo.findById(id);
+
+                    return ok()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(
+                                    fromPublisher(
+                                            media.map(p -> new MediaImpl(p.getId(), fileName,
+                                                    fileIdString, fileExtension, p.getFilePath(), p.getTags()))
+                                                    .flatMap(mediaRepo::save), Media.class));
 
 
-            Mono<Media> media = mediaRepo.findById(id);
-
-            return ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(
-                            fromPublisher(
-                                    media.map(p -> new MediaImpl(p.getId(), fileName,
-                                            fileIdString, fileExtension, p.getFilePath(), p.getTags()))
-                                            .flatMap(mediaRepo::save), Media.class))
-
-                    .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-
-//                        .onErrorResume(e -> Mono.just("Error occured: " + e.getMessage())        //testwise error handling
-                    .onErrorResume(e -> Mono.just(badRequest().build())        //testwise error handling
-                            .flatMap(s -> ServerResponse.status(HttpStatus.BAD_REQUEST)
-                                    .contentType(MediaType.TEXT_PLAIN)
-                                    .syncBody(s)));
-        });
+                });
 
     }
 
     //for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
 
-    @Bean
-    @ExceptionHandler({IllegalStateException.class})
-    public Mono<ServerResponse> handleException() {
-        return ServerResponse.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).body(
-                fromObject(
-                        Mono.just(new BadResponse("Hello from Exception Handler"))
-                )
-        );
-    }
 
-    @ExceptionHandler
-    public Mono<ServerResponse> handle(IllegalStateException ex) {
-        return ServerResponse.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).body(
-                fromObject(
-                        Mono.just(new BadResponse("Hello from Exception Handler"))
-                )
-        );
+    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalArgumentToBadRequest() {
+        return (request, next) -> next.handle(request)
+                .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                ;
     }
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
-//                .onErrorReturn(
-////                        exceptionHandler()
-//                        Mono.just(badRequest().build()) badRequest().build()
-////                        "Hello"
-//                )
-
-                .onErrorResume(
-//                        exceptionHandler()
-                        IllegalStateException.class, e -> ServerResponse.badRequest().build()
-                )
-//                .onErrorReturn(
-//                        Mono.just(ServerResponse.badRequest()))
-//                )
-//                .onErrorReturn(
-//                        IllegalStateException.class, e -> ServerResponse.badRequest().build()
-//                )
-
-                ;
-    }
-
-
-    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest_test() {
-        return (request, next) -> next.handle(request)
-
-//                .onErrorResume(
-//                        IllegalStateException.class, e -> ServerResponse.badRequest().build()
-//                )
                 .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                 ;
-
-    }
-
-
-    @Bean
-    public WebExceptionHandler exceptionHandler() {
-        return (ServerWebExchange exchange, Throwable ex) -> {
-            if (ex instanceof IllegalStateException) {
-                exchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
-                return exchange.getResponse().setComplete();
-            }
-            return Mono.error(ex);
-        };
-    }
-
-
-    class BadResponse {
-        private String developerMessageString;
-
-        public BadResponse(String msg) {
-            developerMessageString = msg;
-        }
     }
 
 

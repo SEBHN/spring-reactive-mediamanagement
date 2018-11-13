@@ -28,6 +28,8 @@ public final class MediaImpl implements Media {
     }
 
     public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, List<Tag> tags) {
+        if(name == null && fileId == null && fileExtension == null && filePath == null && (tags == null || tags.size() == 0))
+            throw new IllegalArgumentException("Parameters for creating a Media Object must not be empty");
         this.id = id;
         this.name = name;
         this.fileId = fileId;

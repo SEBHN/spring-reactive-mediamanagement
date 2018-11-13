@@ -119,7 +119,7 @@ public class MediaHandlerTest {
     public void postInvalidMedia() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromObject(new Tag("something")))
+                .body(BodyInserters.fromObject("hi:|"))
                 .exchange()
                 .expectStatus().is4xxClientError();
     }
