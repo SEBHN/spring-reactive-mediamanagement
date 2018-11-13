@@ -115,7 +115,7 @@ public class MediaHandlerTest {
     }
 
     @Test
-    @Ignore // remove @Ignore after #38 is solved
+    //@Ignore // remove @Ignore after #38 is solved
     public void postInvalidMedia() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
