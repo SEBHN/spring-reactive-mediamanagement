@@ -50,7 +50,6 @@ public class MediaHandler {
     private final GridFsTemplate gridFsTemplate;
 
 
-
     @Autowired
     public MediaHandler(GridFsTemplate gridFsTemplate) {
         this.gridFsTemplate = gridFsTemplate;
@@ -132,9 +131,9 @@ public class MediaHandler {
     }
 
 
-    Mono<ServerResponse> update(ServerRequest request){
+    Mono<ServerResponse> update(ServerRequest request) {
         String id = request.pathVariable("id");
-        if(id == null || id.isEmpty())
+        if (id == null || id.isEmpty())
             return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
         Mono<Media> media = request.bodyToMono(Media.class);
         return ServerResponse.status(HttpStatus.CREATED)
@@ -147,14 +146,14 @@ public class MediaHandler {
     }
 
 
-    Mono<ServerResponse> delete(ServerRequest request){
+    Mono<ServerResponse> delete(ServerRequest request) {
         String id = request.pathVariable("id");
-        if(id == null || id.isEmpty())
+        if (id == null || id.isEmpty())
             return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
 
         return mediaRepo
                 .findById(id)
-                .flatMap(existingMedia ->  noContent().build(mediaRepo.delete(existingMedia)))
+                .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
                 .switchIfEmpty(notFound().build());
     }
 
