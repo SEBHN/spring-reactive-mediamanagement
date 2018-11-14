@@ -5,7 +5,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.connection.Server;
-import com.oracle.webservices.internal.api.message.ContentType;
+
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
