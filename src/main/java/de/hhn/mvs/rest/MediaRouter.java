@@ -20,6 +20,7 @@ public class MediaRouter {
                 .andRoute(POST("/users/{userId}/media").and(accept(APPLICATION_JSON)), mediaHandler::create)
                 .andRoute(POST("/users/{userId}/media/{id}/upload").and(accept(MULTIPART_FORM_DATA)), mediaHandler::upload)
                 .andRoute(PUT("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
+                .andRoute(DELETE("/users/{userId}/media/{id}").and(accept(ALL)), mediaHandler::delete)
                 ;
     }
 }

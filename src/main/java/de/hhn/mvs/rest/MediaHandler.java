@@ -32,8 +32,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
+import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
 import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
@@ -142,6 +144,18 @@ public class MediaHandler {
                                 media.map(p -> new MediaImpl(id, p.getName(),
                                         p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
                                         .flatMap(mediaRepo::save), Media.class));
+    }
+
+
+    Mono<ServerResponse> delete(ServerRequest request){
+        String id = request.pathVariable("id");
+        if(id == null || id.isEmpty())
+            return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
+
+        return mediaRepo
+                .findById(id)
+                .flatMap(existingMedia ->  noContent().build(mediaRepo.delete(existingMedia)))
+                .switchIfEmpty(notFound().build());
     }
 
 
