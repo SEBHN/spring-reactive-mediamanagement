@@ -36,6 +36,7 @@ import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+import static org.springframework.http.MediaType.TEXT_PLAIN;
 import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;

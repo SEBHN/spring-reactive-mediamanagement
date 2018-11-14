@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -115,7 +116,6 @@ public class MediaHandlerTest {
     }
 
     @Test
-    //@Ignore // remove @Ignore after #38 is solved
     public void postInvalidMedia() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -132,8 +132,7 @@ public class MediaHandlerTest {
 
     @Test
     public void uploadValidFile() throws Exception {
-        String fileName = "uploadTest.txt";
-        FileSystemResource resource = new FileSystemResource(folderRule.newFile(fileName));
+        FileSystemResource resource = loadFileFromResource();
         MultiValueMap<String, Object> multipartDataMap = new LinkedMultiValueMap<>();
         multipartDataMap.set("file", resource);
         String mediaId = createMedia(dogMedia).getResponseBody().getId();
@@ -149,9 +148,55 @@ public class MediaHandlerTest {
                 .consumeWith(postedMediaResult -> {
                     Media returnedMedia = postedMediaResult.getResponseBody();
                     assertNotEquals(null, returnedMedia);
-                    assertEquals(fileName, returnedMedia.getName());
+                    assertEquals(resource.getFilename(), returnedMedia.getName());
                     assertNotEquals("", returnedMedia.getFileId());
                 });
+    }
+
+
+    @Test
+    public void uploadInvalidFile() throws Exception {
+        FileSystemResource resource = loadFileFromResource();
+        MultiValueMap<String, Object> multipartDataMap = new LinkedMultiValueMap<>();
+        multipartDataMap.set("not_file", resource);
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        assertNotEquals(null, mediaId);
+
+        //case: key not "file"
+        webClient.post()
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isBadRequest();
+
+        multipartDataMap = new LinkedMultiValueMap<>();
+
+        //case: no File to upload
+        webClient.post()
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    @Ignore
+    public void updateValidMedia(){
+        fail();
+    }
+
+    @Test
+    @Ignore
+    public void deleteValidMedia(){
+        fail();
+    }
+
+    @Test
+    @Ignore
+    public void deleteNonExistingMedia(){
+        fail();
     }
 
     private EntityExchangeResult<Media> createMedia(Media media) {
@@ -161,6 +206,12 @@ public class MediaHandlerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(Media.class).returnResult();
+    }
+
+    private FileSystemResource loadFileFromResource() throws Exception{
+        String fileName = "uploadTest.txt";
+        FileSystemResource resource = new FileSystemResource(folderRule.newFile(fileName));
+        return resource;
     }
 
 }
