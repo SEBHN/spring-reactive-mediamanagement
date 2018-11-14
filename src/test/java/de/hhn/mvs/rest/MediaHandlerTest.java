@@ -33,6 +33,7 @@ public class MediaHandlerTest {
 
 
     private static final int ANY_USER_ID = 1;
+    private static final String NOT_EXISTING_MEDIA_ID = "66666";
 
     @Autowired
     private MediaCrudRepo mediaRepo;
@@ -125,7 +126,7 @@ public class MediaHandlerTest {
 
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromObject(new MediaImpl(null, null, null,null,null)))
+                .body(BodyInserters.fromObject(new MediaImpl(null, null, null, null, null)))
                 .exchange()
                 .expectStatus().is4xxClientError();
     }
@@ -182,7 +183,7 @@ public class MediaHandlerTest {
     }
 
     @Test
-    public void updateValidMedia(){
+    public void updateValidMedia() {
         String mediaId = createMedia(dogMedia).getResponseBody().getId();
         dogMedia = getMedia(mediaId).getResponseBody();
         assertEquals(mediaId, dogMedia.getId());
@@ -209,14 +210,29 @@ public class MediaHandlerTest {
 
     @Test
     @Ignore
-    public void deleteValidMedia(){
-        fail();
+    public void updateNonExistingMedia() {
+
+        webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
+    public void deleteValidMedia() {
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, mediaId)
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
+
+    @Test
     @Ignore
-    public void deleteNonExistingMedia(){
+    public void deleteNonExistingMedia() {
         fail();
+//        webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
+//                .exchange()
+//                .expectStatus().isNotFound();
     }
 
     private EntityExchangeResult<Media> createMedia(Media media) {
@@ -228,14 +244,14 @@ public class MediaHandlerTest {
                 .expectBody(Media.class).returnResult();
     }
 
-    private EntityExchangeResult<Media> getMedia(String mediaId){
+    private EntityExchangeResult<Media> getMedia(String mediaId) {
         return webClient.get().uri("/users/{userId}/media/{id}/", ANY_USER_ID, mediaId)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(Media.class).returnResult();
     }
 
-    private FileSystemResource loadFileFromResource() throws Exception{
+    private FileSystemResource loadFileFromResource() throws Exception {
         String fileName = "uploadTest.txt";
         FileSystemResource resource = new FileSystemResource(folderRule.newFile(fileName));
         return resource;
