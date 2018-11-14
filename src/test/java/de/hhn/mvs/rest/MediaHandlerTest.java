@@ -209,10 +209,10 @@ public class MediaHandlerTest {
     }
 
     @Test
-    @Ignore
     public void updateNonExistingMedia() {
-
-        webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
+        webClient.post().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(dogMedia))
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -227,12 +227,10 @@ public class MediaHandlerTest {
 
 
     @Test
-    @Ignore
     public void deleteNonExistingMedia() {
-        fail();
-//        webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
-//                .exchange()
-//                .expectStatus().isNotFound();
+        webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     private EntityExchangeResult<Media> createMedia(Media media) {

@@ -164,14 +164,12 @@ public class MediaHandler {
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> illegalArgumentToBadRequest() {
         return (request, next) -> next.handle(request)
-                .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                ;
+                .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
-                .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                ;
+                .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
 
@@ -180,13 +178,17 @@ public class MediaHandler {
         if (id == null || id.isEmpty())
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("Id must not be empty"));
         Mono<Media> media = request.bodyToMono(Media.class);
-        return ServerResponse.status(HttpStatus.OK)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(
-                        fromPublisher(
-                                media.map(p -> new MediaImpl(id, p.getName(),
-                                        p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
-                                        .flatMap(mediaRepo::save), Media.class));
+
+        return mediaRepo
+                .findById(id)
+                .flatMap(existingMedia -> ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(
+                                fromPublisher(
+                                        media.map(p -> new MediaImpl(id, p.getName(),
+                                                p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
+                                                .flatMap(mediaRepo::save), Media.class)))
+                .switchIfEmpty(notFound().build());
     }
 
 
