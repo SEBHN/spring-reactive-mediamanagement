@@ -4,7 +4,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
-
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
@@ -32,12 +31,10 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-
-import static org.springframework.http.MediaType.TEXT_PLAIN;
-import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
@@ -66,9 +63,11 @@ public class MediaHandler {
                 .switchIfEmpty(notFound().build());
     }
 
+
     Mono<ServerResponse> list(ServerRequest request) {
         return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findAll(), Media.class);
     }
+
 
     Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
@@ -91,11 +90,9 @@ public class MediaHandler {
 
                 )
                 .onErrorReturn(ServerResponse.badRequest().build().block())
-                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-
-                ;
-
+                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
+
 
     Mono<ServerResponse> download(ServerRequest request) {
         String id = request.pathVariable("id");
@@ -108,12 +105,6 @@ public class MediaHandler {
 
         });
         return ServerResponse.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromPublisher(rs, Resource.class));
-    }
-
-
-    private GridFSBucket getGridFsBucket() {
-        MongoDatabase db = mongoDbFactory.getDb();
-        return GridFSBuckets.create(db);
     }
 
 
@@ -153,23 +144,7 @@ public class MediaHandler {
                                             media.map(p -> new MediaImpl(p.getId(), fileName,
                                                     fileIdString, fileExtension, p.getFilePath(), p.getTags()))
                                                     .flatMap(mediaRepo::save), Media.class));
-
-
                 });
-
-    }
-
-    //for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
-
-
-    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalArgumentToBadRequest() {
-        return (request, next) -> next.handle(request)
-                .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
-    }
-
-    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
-        return (request, next) -> next.handle(request)
-                .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
 
@@ -204,4 +179,17 @@ public class MediaHandler {
     }
 
 
+    /**
+     * for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
+     */
+    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
+        return (request, next) -> next.handle(request)
+                .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
+
+    private GridFSBucket getGridFsBucket() {
+        MongoDatabase db = mongoDbFactory.getDb();
+        return GridFSBuckets.create(db);
+    }
 }
