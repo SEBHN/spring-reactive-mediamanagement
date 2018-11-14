@@ -4,15 +4,12 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.mongodb.connection.Server;
 
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
-import io.netty.handler.codec.DecoderException;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.Resource;
 import org.springframework.data.mongodb.MongoDbFactory;
@@ -22,19 +19,14 @@ import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebExceptionHandler;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -43,10 +35,11 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.MediaType.asMediaType;
+
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
+
+import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
 import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
@@ -175,6 +168,33 @@ public class MediaHandler {
         return (request, next) -> next.handle(request)
                 .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                 ;
+    }
+
+
+    Mono<ServerResponse> update(ServerRequest request) {
+        String id = request.pathVariable("id");
+        if (id == null || id.isEmpty())
+            return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
+        Mono<Media> media = request.bodyToMono(Media.class);
+        return ServerResponse.status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        fromPublisher(
+                                media.map(p -> new MediaImpl(id, p.getName(),
+                                        p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
+                                        .flatMap(mediaRepo::save), Media.class));
+    }
+
+
+    Mono<ServerResponse> delete(ServerRequest request) {
+        String id = request.pathVariable("id");
+        if (id == null || id.isEmpty())
+            return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
+
+        return mediaRepo
+                .findById(id)
+                .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
+                .switchIfEmpty(notFound().build());
     }
 
 
