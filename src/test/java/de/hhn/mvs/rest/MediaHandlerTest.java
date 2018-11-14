@@ -122,6 +122,12 @@ public class MediaHandlerTest {
                 .body(BodyInserters.fromObject("hi:|"))
                 .exchange()
                 .expectStatus().is4xxClientError();
+
+        webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(new MediaImpl(null, null, null,null,null)))
+                .exchange()
+                .expectStatus().is4xxClientError();
     }
 
     @Test

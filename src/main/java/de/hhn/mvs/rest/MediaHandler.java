@@ -36,12 +36,10 @@ import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-
-import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class MediaHandler {
@@ -79,10 +77,15 @@ public class MediaHandler {
                 .body(
                         fromPublisher(
                                 media.map(p ->
-                                        new MediaImpl(id.toString(), p.getName(),
-                                                p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
+                                {
+                                    MediaImpl createdMedia = new MediaImpl(id.toString(), p.getName(),
+                                            p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags());
+                                    createdMedia.validate();
+                                    return createdMedia;
+
+                                })
                                         .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage()))
+                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .flatMap(mediaRepo::save), Media.class)
 
                 )
