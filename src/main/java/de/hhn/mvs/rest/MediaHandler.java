@@ -180,7 +180,7 @@ public class MediaHandler {
         if (id == null || id.isEmpty())
             return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
         Mono<Media> media = request.bodyToMono(Media.class);
-        return ServerResponse.status(HttpStatus.CREATED)
+        return ServerResponse.status(HttpStatus.OK)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
                         fromPublisher(

@@ -182,9 +182,29 @@ public class MediaHandlerTest {
     }
 
     @Test
-    @Ignore
     public void updateValidMedia(){
-        fail();
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        dogMedia = getMedia(mediaId).getResponseBody();
+        assertEquals(mediaId, dogMedia.getId());
+
+        dogMedia.setName("newDogName");
+        dogMedia.setFilePath("dog/newDogPath");
+
+        webClient.put().uri("/users/{userId}/media/{id}", ANY_USER_ID, mediaId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(dogMedia))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Media.class)
+                .consumeWith(returnedMediaResult -> {
+                    Media returnedMedia = returnedMediaResult.getResponseBody();
+                    assertNotEquals(null, returnedMedia);
+                    assertEquals(dogMedia.getId(), returnedMedia.getId());
+                    assertEquals(dogMedia.getName(), returnedMedia.getName());
+                    assertEquals(dogMedia.getTags(), returnedMedia.getTags());
+                    assertEquals(dogMedia.getFileExtension(), returnedMedia.getFileExtension());
+                    assertEquals(dogMedia.getFilePath(), returnedMedia.getFilePath());
+                });
     }
 
     @Test
@@ -205,6 +225,13 @@ public class MediaHandlerTest {
                 .body(BodyInserters.fromObject(media))
                 .exchange()
                 .expectStatus().isCreated()
+                .expectBody(Media.class).returnResult();
+    }
+
+    private EntityExchangeResult<Media> getMedia(String mediaId){
+        return webClient.get().uri("/users/{userId}/media/{id}/", ANY_USER_ID, mediaId)
+                .exchange()
+                .expectStatus().isOk()
                 .expectBody(Media.class).returnResult();
     }
 
