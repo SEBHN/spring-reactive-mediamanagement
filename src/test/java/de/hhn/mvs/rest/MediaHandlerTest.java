@@ -213,7 +213,7 @@ public class MediaHandlerTest {
         assertEquals(mediaId, dogMedia.getId());
 
         dogMedia.setName("newDogName");
-        dogMedia.setFilePath("dog/newDogPath/");
+        dogMedia.setFilePath("/dog/newDogPath/");
 
         webClient.put().uri("/users/{userId}/media/{id}", ANY_USER_ID, mediaId)
                 .contentType(MediaType.APPLICATION_JSON)
