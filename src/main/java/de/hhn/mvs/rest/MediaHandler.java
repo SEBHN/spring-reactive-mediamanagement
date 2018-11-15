@@ -68,21 +68,31 @@ public class MediaHandler {
                 .switchIfEmpty(notFound().build());
     }
 
-
     Mono<ServerResponse> list(ServerRequest request) {
         String folderPath = request.pathVariable("folderPath");
+        List<Subfolder> subfolders = new ArrayList<>();
+//        subfolders.add(new Subfolder());
+        Mono<List<Media>> listMono = mediaRepo.findAllByFilePathContains(folderPath).collectList();
+        Mono<List<Subfolder>> subfolderMonoList = Mono.just(subfolders);
+
+        Mono<FolderElements> folderElementsMono = Mono.zip(listMono, subfolderMonoList, (l, s) -> new FolderElements(s, l));
+
+
         return ok().contentType(MediaType.APPLICATION_JSON)
-                .body(mediaRepo.findAll(), Media.class
-//                        new FolderElements(
-//                         new ArrayList<Subfolder>(), //TODO query from MonogDb instead.
-//                         fromPublisher(
-//                                mediaRepo.findAllByFilePathContains(folderPath)
-//                                .collectList().map(list -> new ArrayList(list))
-//                        , List.class)
-//                        )
-//                        , FolderElements.class
-                );
+                .body(fromPublisher(folderElementsMono, FolderElements.class));
     }
+
+//    Mono<ServerResponse> list(ServerRequest request) {
+//        String folderPath = request.pathVariable("folderPath");
+//        return ok().contentType(MediaType.APPLICATION_JSON)
+//                .body(//mediaRepo.findAll(), Media.class
+//                         new FolderElements(
+//                         Mono.just(new ArrayList<Subfolder>()), //TODO query from MonogDb instead.
+//                                 mediaRepo.findAllByFilePathContains(folderPath)
+//                                .collectList())
+//
+//                );
+//    }
 
 
     Mono<ServerResponse> create(ServerRequest request) {
