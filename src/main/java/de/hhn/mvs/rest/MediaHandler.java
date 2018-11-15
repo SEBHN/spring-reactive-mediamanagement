@@ -63,12 +63,14 @@ public class MediaHandler {
 
     Mono<ServerResponse> get(ServerRequest request) {
         String mediaId = request.pathVariable("id");
-        return mediaRepo.findById(mediaId)
-                .flatMap(person -> ok().contentType(APPLICATION_JSON).body(fromObject(person)))
+        String userId = request.pathVariable("userId");
+        return mediaRepo.findByIdAndUser(mediaId, userId)
+                .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
                 .switchIfEmpty(notFound().build());
     }
 
     Mono<ServerResponse> list(ServerRequest request) {
+        String userId = request.pathVariable("userId");
         String folderPath = request.pathVariable("folderPath");
         List<Subfolder> subfolders = new ArrayList<>();
 //        subfolders.add(new Subfolder());
@@ -92,38 +94,41 @@ public class MediaHandler {
                         fromPublisher(
                                 media.map(p ->
                                 {
+                                    String userId = request.pathVariable("userId");
                                     MediaImpl createdMedia = new MediaImpl(id.toString(), p.getName(),
-                                            p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags());
+                                            p.getFileId(), p.getFileExtension(), p.getFilePath(), userId, p.getTags());
                                     createdMedia.validate();
                                     return createdMedia;
-
-                                })
-                                        .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .flatMap(mediaRepo::save), Media.class)
 
                 )
-                .onErrorReturn(ServerResponse.badRequest().build().block())
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
 
     Mono<ServerResponse> download(ServerRequest request) {
         String id = request.pathVariable("id");
-        Mono<Media> mediaMono = mediaRepo.findById(id);
+        String userId = request.pathVariable("userId");
+        return mediaRepo
+                .findByIdAndUser(id, userId)
+                .flatMap(existingMedia -> {
+                    GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
+                    if (gridFsfile == null) {
+                        return notFound().build();
+                    }
 
-        Mono<Resource> rs = mediaMono.map(media -> {
-            GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(media.getFileId())));
-
-            return new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
-
-        });
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromPublisher(rs, Resource.class));
+                    Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
+                    return ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromObject(rs));
+                })
+                .switchIfEmpty(notFound().build());
     }
 
 
     Mono<ServerResponse> upload(ServerRequest request) {
         String id = request.pathVariable("id");
+        String userId = request.pathVariable("userId");
         String fileKey = "file";
 
         return request.body(BodyExtractors.toMultipartData())
@@ -156,7 +161,7 @@ public class MediaHandler {
                             .body(
                                     fromPublisher(
                                             media.map(p -> new MediaImpl(p.getId(), fileName,
-                                                    fileIdString, fileExtension, p.getFilePath(), p.getTags()))
+                                                    fileIdString, fileExtension, p.getFilePath(), userId, p.getTags()))
                                                     .flatMap(mediaRepo::save), Media.class));
                 });
     }
@@ -164,18 +169,23 @@ public class MediaHandler {
 
     Mono<ServerResponse> update(ServerRequest request) {
         String id = request.pathVariable("id");
-        if (id == null || id.isEmpty())
+        String userId = request.pathVariable("userId");
+        if (id == null || id.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("Id must not be empty"));
+        } else if (userId == null || userId.isEmpty()) {
+            return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
+        }
+
         Mono<Media> media = request.bodyToMono(Media.class);
 
         return mediaRepo
-                .findById(id)
+                .findByIdAndUser(id, userId)
                 .flatMap(existingMedia -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(
                                 fromPublisher(
                                         media.map(p -> new MediaImpl(id, p.getName(),
-                                                p.getFileId(), p.getFileExtension(), p.getFilePath(), p.getTags()))
+                                                p.getFileId(), p.getFileExtension(), p.getFilePath(), userId, p.getTags()))
                                                 .flatMap(mediaRepo::save), Media.class)))
                 .switchIfEmpty(notFound().build());
     }
@@ -183,11 +193,15 @@ public class MediaHandler {
 
     Mono<ServerResponse> delete(ServerRequest request) {
         String id = request.pathVariable("id");
-        if (id == null || id.isEmpty())
-            return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("Id must not be empty"));
+        String userId = request.pathVariable("userId");
+        if (id == null || id.isEmpty()) {
+            return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("Id must not be empty"));
+        } else if (userId == null || userId.isEmpty()) {
+            return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
+        }
 
         return mediaRepo
-                .findById(id)
+                .findByIdAndUser(id, userId)
                 .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
                 .switchIfEmpty(notFound().build());
     }
@@ -196,7 +210,7 @@ public class MediaHandler {
     /**
      * for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
      */
-    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
+    HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
                 .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
