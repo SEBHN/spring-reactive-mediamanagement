@@ -17,7 +17,10 @@ public class MediaRouter {
                 .route(GET("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::get)
                 .andRoute(GET("/users/{userId}/media/{id}/download").and(accept(APPLICATION_OCTET_STREAM)), mediaHandler::download)
                 .andRoute(GET("/users/{userId}/media").and(accept(APPLICATION_JSON)), mediaHandler::list)
-                .andRoute(POST("/users/{userId}/media"), mediaHandler::create)
-                .andRoute(POST("/users/{userId}/media/{id}/upload").and(accept(MULTIPART_FORM_DATA)), mediaHandler::upload);
+                .andRoute(POST("/users/{userId}/media").and(accept(APPLICATION_JSON)), mediaHandler::create)
+                .andRoute(POST("/users/{userId}/media/{id}/upload").and(accept(MULTIPART_FORM_DATA)), mediaHandler::upload)
+                .filter(mediaHandler.illegalStateToBadRequest())
+                .andRoute(PUT("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
+                .andRoute(DELETE("/users/{userId}/media/{id}").and(accept(ALL)), mediaHandler::delete);
     }
 }
