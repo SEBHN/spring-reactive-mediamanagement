@@ -23,6 +23,12 @@ public final class MediaImpl implements Media {
         // for jackson
     }
 
+    public MediaImpl(Media media){
+        if(media instanceof MediaImpl){
+
+        }
+    }
+
     public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, Tag... tags) {
         this(id, name, fileId, fileExtension, filePath, new ArrayList<>(Arrays.asList(tags)));
     }

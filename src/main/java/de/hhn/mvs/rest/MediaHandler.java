@@ -5,8 +5,10 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
+import de.hhn.mvs.model.FolderElements;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
+import de.hhn.mvs.model.Subfolder;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
@@ -31,10 +33,13 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
@@ -65,7 +70,18 @@ public class MediaHandler {
 
 
     Mono<ServerResponse> list(ServerRequest request) {
-        return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findAll(), Media.class);
+        String folderPath = request.pathVariable("folderPath");
+        return ok().contentType(MediaType.APPLICATION_JSON)
+                .body(mediaRepo.findAll(), Media.class
+//                        new FolderElements(
+//                         new ArrayList<Subfolder>(), //TODO query from MonogDb instead.
+//                         fromPublisher(
+//                                mediaRepo.findAllByFilePathContains(folderPath)
+//                                .collectList().map(list -> new ArrayList(list))
+//                        , List.class)
+//                        )
+//                        , FolderElements.class
+                );
     }
 
 
