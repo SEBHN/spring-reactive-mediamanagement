@@ -74,7 +74,7 @@ public class MediaHandler {
 
         List<Subfolder> subfolders = new ArrayList<>();
         Mono<List<Subfolder>> subfolderListMono = Mono.just(subfolders);    //TODO: get from DB
-        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePathEndsWith(userId, parseFolderPathFormat(folderPath)).collectList();    //TODO: prove query
+        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parseFolderPathFormat(folderPath)).collectList();    //TODO: prove query
 
         //zip lists from mongoDb to one Object
         Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
