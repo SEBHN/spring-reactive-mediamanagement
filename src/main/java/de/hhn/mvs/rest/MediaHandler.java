@@ -59,7 +59,7 @@ public class MediaHandler {
     Mono<ServerResponse> get(ServerRequest request) {
         String mediaId = request.pathVariable("id");
         String userId = request.pathVariable("userId");
-        return mediaRepo.findByIdAndUser(mediaId, userId)
+        return mediaRepo.findByIdAndOwnerId(mediaId, userId)
                 .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
                 .switchIfEmpty(notFound().build());
     }
@@ -67,7 +67,7 @@ public class MediaHandler {
 
     Mono<ServerResponse> list(ServerRequest request) {
         String userId = request.pathVariable("userId");
-        return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findByUser(userId), Media.class);
+        return ok().contentType(MediaType.APPLICATION_JSON).body(mediaRepo.findByOwnerId(userId), Media.class);
     }
 
 
@@ -98,7 +98,7 @@ public class MediaHandler {
         String id = request.pathVariable("id");
         String userId = request.pathVariable("userId");
         return mediaRepo
-                .findByIdAndUser(id, userId)
+                .findByIdAndOwnerId(id, userId)
                 .flatMap(existingMedia -> {
                     GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
                     if (gridFsfile == null) {
@@ -165,7 +165,7 @@ public class MediaHandler {
         Mono<Media> media = request.bodyToMono(Media.class);
 
         return mediaRepo
-                .findByIdAndUser(id, userId)
+                .findByIdAndOwnerId(id, userId)
                 .flatMap(existingMedia -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(
@@ -187,7 +187,7 @@ public class MediaHandler {
         }
 
         return mediaRepo
-                .findByIdAndUser(id, userId)
+                .findByIdAndOwnerId(id, userId)
                 .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
                 .switchIfEmpty(notFound().build());
     }
