@@ -4,7 +4,10 @@ import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Tag;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +27,6 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -32,7 +34,8 @@ import static org.junit.Assert.fail;
 public class MediaHandlerTest {
 
 
-    private static final int ANY_USER_ID = 1;
+    private static final String ANY_USER_ID = "1";
+    private static final String ANY_OTHER_USER_ID = "2";
     private static final String NOT_EXISTING_MEDIA_ID = "66666";
 
     @Autowired
@@ -47,6 +50,8 @@ public class MediaHandlerTest {
     private Mono<Media> catMediaSave;
     private Media dogMedia;
     private Mono<Media> dogMediaSave;
+    private Media anotherDog;
+    private Mono<Media> anotherDogMediaSave;
 
     @Before
     public void setUp() {
@@ -55,10 +60,12 @@ public class MediaHandlerTest {
         Tag cute = new Tag("cute");
         Tag meme = new Tag("meme");
 
-        catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "123462345", ".jpg", "", cats, cute);
-        dogMedia = new MediaImpl(UUID.randomUUID().toString(), "Such Wow", "1337", ".jpg", "", doge, meme);
+        catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "123462345", ".jpg", "", ANY_USER_ID, cats, cute);
+        dogMedia = new MediaImpl(UUID.randomUUID().toString(), "Such Wow", "1337", ".jpg", "", ANY_USER_ID, doge, meme);
+        anotherDog = new MediaImpl(UUID.randomUUID().toString(), "Such fabulous", "1338", ".png", "", ANY_OTHER_USER_ID, doge, meme);
         catMediaSave = mediaRepo.save(catMedia);
         dogMediaSave = mediaRepo.save(dogMedia);
+        anotherDogMediaSave = mediaRepo.save(anotherDog);
     }
 
     @After
@@ -86,16 +93,25 @@ public class MediaHandlerTest {
     }
 
     @Test
+    public void getExistingFromAnotherUser() {
+        anotherDogMediaSave.block();
+        webClient.get().uri("/users/{userId}/media/{id}", ANY_USER_ID, anotherDog.getId()).accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
     public void list() {
         catMediaSave.block(); // ensure is saved to db
         dogMediaSave.block();
+        anotherDogMediaSave.block();
 
         webClient.get().uri("/users/{userId}/media", ANY_USER_ID).accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
                 .expectBodyList(Media.class)
-                .hasSize(2).contains(catMedia, dogMedia);
+                .hasSize(2).contains(catMedia, dogMedia).doesNotContain(anotherDog);
     }
 
     @Test
@@ -113,20 +129,25 @@ public class MediaHandlerTest {
                     assertEquals(catMedia.getTags(), returnedMedia.getTags());
                     assertEquals(catMedia.getFileExtension(), returnedMedia.getFileExtension());
                     assertEquals(catMedia.getFilePath(), returnedMedia.getFilePath());
+                    assertEquals(ANY_USER_ID, returnedMedia.getOwnerId());
                 });
     }
 
     @Test
-    public void postInvalidMedia() {
+    public void postInvalidMedia_WithString() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromObject("hi:|"))
                 .exchange()
                 .expectStatus().is4xxClientError();
+    }
 
+
+    @Test
+    public void postInvalidMedia() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromObject(new MediaImpl(null, null, null, null, null)))
+                .body(BodyInserters.fromObject(new MediaImpl(null, null, null, null, null, null)))
                 .exchange()
                 .expectStatus().is4xxClientError();
     }
@@ -156,14 +177,13 @@ public class MediaHandlerTest {
 
 
     @Test
-    public void uploadInvalidFile() throws Exception {
+    public void uploadInvalidFile_WithKeyNotFile() throws Exception {
         FileSystemResource resource = loadFileFromResource();
         MultiValueMap<String, Object> multipartDataMap = new LinkedMultiValueMap<>();
         multipartDataMap.set("not_file", resource);
         String mediaId = createMedia(dogMedia).getResponseBody().getId();
         assertNotEquals(null, mediaId);
 
-        //case: key not "file"
         webClient.post()
                 .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -171,9 +191,15 @@ public class MediaHandlerTest {
                 .exchange()
                 .expectStatus().isBadRequest();
 
-        multipartDataMap = new LinkedMultiValueMap<>();
+        multipartDataMap.clear();
+    }
 
-        //case: no File to upload
+    @Test
+    public void uploadInvalidFile_WithoutFile() {
+        MultiValueMap<String, Object> multipartDataMap = new LinkedMultiValueMap<>();
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        assertNotEquals(null, mediaId);
+
         webClient.post()
                 .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -233,6 +259,15 @@ public class MediaHandlerTest {
                 .expectStatus().isNotFound();
     }
 
+    @Test
+    public void deleteValidMediaFromOtherUser() {
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        webClient.delete().uri("/users/{userId}/media/{id}", ANY_OTHER_USER_ID, mediaId)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+
     private EntityExchangeResult<Media> createMedia(Media media) {
         return webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -251,8 +286,7 @@ public class MediaHandlerTest {
 
     private FileSystemResource loadFileFromResource() throws Exception {
         String fileName = "uploadTest.txt";
-        FileSystemResource resource = new FileSystemResource(folderRule.newFile(fileName));
-        return resource;
+        return new FileSystemResource(folderRule.newFile(fileName));
     }
 
 }

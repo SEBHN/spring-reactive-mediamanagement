@@ -17,23 +17,25 @@ public final class MediaImpl implements Media {
     private String fileId;
     private String fileExtension;
     private String filePath;
+    private String ownerId;
     private List<Tag> tags;
 
     public MediaImpl() {
         // for jackson
     }
 
-    public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, Tag... tags) {
-        this(id, name, fileId, fileExtension, filePath, new ArrayList<>(Arrays.asList(tags)));
+    public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, String owner, Tag... tags) {
+        this(id, name, fileId, fileExtension, filePath, owner, new ArrayList<>(Arrays.asList(tags)));
     }
 
-    public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, List<Tag> tags) {
+    public MediaImpl(String id, String name, String fileId, String fileExtension, String filePath, String owner, List<Tag> tags) {
         this.id = id;
         this.name = name;
         this.fileId = fileId;
         this.fileExtension = fileExtension;
         this.filePath = filePath;
         this.tags = tags;
+        this.ownerId = owner;
     }
 
     public boolean validate() {
@@ -108,6 +110,16 @@ public final class MediaImpl implements Media {
     }
 
     @Override
+    public String getOwnerId() {
+        return this.ownerId;
+    }
+
+    @Override
+    public void setOwnerId(String userId) {
+        this.ownerId = userId;
+    }
+
+    @Override
     public String toString() {
         return "Media{" +
                 "id='" + id + '\'' +
@@ -115,6 +127,7 @@ public final class MediaImpl implements Media {
                 ", fileId='" + fileId + '\'' +
                 ", fileExtension='" + fileExtension + '\'' +
                 ", filePath='" + filePath + '\'' +
+                ", owner=" + ownerId +
                 ", tags=" + tags +
                 '}';
     }
@@ -129,11 +142,12 @@ public final class MediaImpl implements Media {
                 Objects.equals(fileId, media.fileId) &&
                 Objects.equals(fileExtension, media.fileExtension) &&
                 Objects.equals(filePath, media.filePath) &&
-                Objects.equals(tags, media.tags);
+                Objects.equals(tags, media.tags) &&
+                Objects.equals(ownerId, media.ownerId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fileId, fileExtension, filePath, tags);
+        return Objects.hash(id, name, fileId, fileExtension, filePath, tags, ownerId);
     }
 }
