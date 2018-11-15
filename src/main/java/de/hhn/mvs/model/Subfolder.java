@@ -9,6 +9,7 @@ public class Subfolder {
         // for jackson
     }
 
+
     public Subfolder(String name) {
         this.name = name;
     }
@@ -30,7 +31,7 @@ public class Subfolder {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Tag folder = (Tag) o;
+        Subfolder folder = (Subfolder) o;
         return Objects.equals(name, folder.getName() );
     }
 

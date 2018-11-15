@@ -33,10 +33,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
@@ -71,10 +68,27 @@ public class MediaHandler {
     Mono<ServerResponse> list(ServerRequest request) {
         String folderPath = request.queryParam("folder").orElse("/");
         String userId = request.pathVariable("userId");
+        String parsedfolderPath = parseFolderPathFormat(folderPath);
+//        List<Subfolder> subfolders = new ArrayList<>();
 
-        List<Subfolder> subfolders = new ArrayList<>();
-        Mono<List<Subfolder>> subfolderListMono = Mono.just(subfolders);    //TODO: get from DB
-        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parseFolderPathFormat(folderPath)).collectList();    //TODO: prove query
+        Mono<List<Subfolder>> subfolderListMono = //Mono.just(subfolders);    //TODO: get from DB
+                mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath).collectList().map(media -> {
+                    ArrayList<Subfolder> filtered = new ArrayList<>();
+                    for (Media medium : media) {
+                        if (medium.getFilePath().length() >= parsedfolderPath.length()) {
+                            String folder = medium.getFilePath();
+                            String shortend = folder.replaceFirst(parsedfolderPath, "");
+                            int indexOfNextSlash = shortend.indexOf("/");
+                            if (indexOfNextSlash > 0) {
+                                String subfoldername = shortend.substring(0, indexOfNextSlash);
+                                filtered.add(new Subfolder(subfoldername));
+                            }
+                        }
+                    }
+                    return new ArrayList<Subfolder>(new HashSet<Subfolder>(filtered));
+                });
+
+        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parsedfolderPath).collectList();
 
         //zip lists from mongoDb to one Object
         Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
@@ -227,8 +241,8 @@ public class MediaHandler {
         String newPath = folderPath;
         if (!folderPath.endsWith("/"))
             newPath = newPath + "/";
-        if (newPath.length() > 1 && newPath.startsWith("/"))
-            newPath = newPath.substring(1);
+        if (newPath.length() > 1 && !newPath.startsWith("/"))
+            newPath = "/" + newPath;
         return newPath;
     }
 }

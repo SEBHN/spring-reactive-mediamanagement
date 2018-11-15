@@ -19,6 +19,8 @@ public interface MediaCrudRepo extends ReactiveMongoRepository<Media, String> {
 
     Flux<Media> findAllByOwnerIdAndFilePath(String userId, String filePath);
 
+    Flux<Media> findAllByOwnerIdAndFilePathIsStartingWith(String userId, String filePath);
+
     Mono<Media> findByIdAndOwnerId(String id, String ownerId);
 
     Flux<Media> findByOwnerId(String ownerId);
