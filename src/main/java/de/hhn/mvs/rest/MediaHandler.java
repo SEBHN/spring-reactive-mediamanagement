@@ -70,12 +70,13 @@ public class MediaHandler {
     }
 
     Mono<ServerResponse> list(ServerRequest request) {
+        String folderPath = request.queryParam("folder").orElse("/");
         String userId = request.pathVariable("userId");
-        String folderPath = request.pathVariable("folderPath");
+//        String folderPath = request.pathVariable("folderPath");
         List<Subfolder> subfolders = new ArrayList<>();
 //        subfolders.add(new Subfolder());
         Mono<List<Subfolder>> subfolderListMono = Mono.just(subfolders);    //TODO: get from DB
-        Mono<List<Media>> mediaListMono = mediaRepo.findAllByFilePathContains(folderPath).collectList();    //TODO: prove query
+        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePathContains(userId, folderPath).collectList();    //TODO: prove query
 
         //zip lists from mongoDb to one Object
         Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
