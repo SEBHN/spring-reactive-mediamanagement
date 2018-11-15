@@ -90,7 +90,6 @@ public class MediaHandler {
                                         .flatMap(mediaRepo::save), Media.class)
 
                 )
-                .onErrorReturn(ServerResponse.badRequest().build().block())
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
@@ -102,8 +101,11 @@ public class MediaHandler {
                 .findByIdAndUser(id, userId)
                 .flatMap(existingMedia -> {
                     GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
-                    Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
+                    if (gridFsfile == null) {
+                        return notFound().build();
+                    }
 
+                    Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
                     return ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromObject(rs));
                 })
                 .switchIfEmpty(notFound().build());
@@ -194,7 +196,7 @@ public class MediaHandler {
     /**
      * for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
      */
-    public HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
+    HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
                 .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }

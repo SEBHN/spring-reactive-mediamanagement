@@ -286,8 +286,7 @@ public class MediaHandlerTest {
 
     private FileSystemResource loadFileFromResource() throws Exception {
         String fileName = "uploadTest.txt";
-        FileSystemResource resource = new FileSystemResource(folderRule.newFile(fileName));
-        return resource;
+        return new FileSystemResource(folderRule.newFile(fileName));
     }
 
 }
