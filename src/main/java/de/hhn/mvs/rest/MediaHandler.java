@@ -72,27 +72,15 @@ public class MediaHandler {
         String folderPath = request.pathVariable("folderPath");
         List<Subfolder> subfolders = new ArrayList<>();
 //        subfolders.add(new Subfolder());
-        Mono<List<Media>> listMono = mediaRepo.findAllByFilePathContains(folderPath).collectList();
-        Mono<List<Subfolder>> subfolderMonoList = Mono.just(subfolders);
+        Mono<List<Subfolder>> subfolderListMono = Mono.just(subfolders);    //TODO: get from DB
+        Mono<List<Media>> mediaListMono = mediaRepo.findAllByFilePathContains(folderPath).collectList();    //TODO: prove query
 
-        Mono<FolderElements> folderElementsMono = Mono.zip(listMono, subfolderMonoList, (l, s) -> new FolderElements(s, l));
-
+        //zip lists from mongoDb to one Object
+        Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
 
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
     }
-
-//    Mono<ServerResponse> list(ServerRequest request) {
-//        String folderPath = request.pathVariable("folderPath");
-//        return ok().contentType(MediaType.APPLICATION_JSON)
-//                .body(//mediaRepo.findAll(), Media.class
-//                         new FolderElements(
-//                         Mono.just(new ArrayList<Subfolder>()), //TODO query from MonogDb instead.
-//                                 mediaRepo.findAllByFilePathContains(folderPath)
-//                                .collectList())
-//
-//                );
-//    }
 
 
     Mono<ServerResponse> create(ServerRequest request) {

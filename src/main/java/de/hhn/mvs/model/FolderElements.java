@@ -16,16 +16,8 @@ public class FolderElements {
     }
 
     public FolderElements(List<Subfolder> subfolders, List<Media> media) {
-
-//        this.subfolders = subfolders.block();
-//        this.media = media.block();
-
         this.subfolders = subfolders;
         this.media = media;
-//        subfolders.subscribe(mySubfolders ->
-//                this.subfolders = mySubfolders);
-//        media.subscribe(myMedia ->
-//                this.media = myMedia);
     }
 
 
