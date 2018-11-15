@@ -69,12 +69,12 @@ public class MediaHandler {
         String folderPath = request.queryParam("folder").orElse("/");
         String userId = request.pathVariable("userId");
         String parsedfolderPath = parseFolderPathFormat(folderPath);
-//        List<Subfolder> subfolders = new ArrayList<>();
 
-        Mono<List<Subfolder>> subfolderListMono = //Mono.just(subfolders);    //TODO: get from DB
+        Mono<List<Subfolder>> subfolderListMono =
                 mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath).collectList().map(media -> {
                     ArrayList<Subfolder> filtered = new ArrayList<>();
                     for (Media medium : media) {
+                        //loop over media and extract next folder after requested one
                         if (medium.getFilePath().length() >= parsedfolderPath.length()) {
                             String folder = medium.getFilePath();
                             String shortend = folder.replaceFirst(parsedfolderPath, "");
@@ -85,8 +85,9 @@ public class MediaHandler {
                             }
                         }
                     }
+                    //filter duplicates
                     return new ArrayList<Subfolder>(new HashSet<Subfolder>(filtered));
-                });
+                });                                                                                      //later: optimize
 
         Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parsedfolderPath).collectList();
 
@@ -95,7 +96,6 @@ public class MediaHandler {
 
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
-        //TODO: write test for list
     }
 
 
@@ -237,6 +237,7 @@ public class MediaHandler {
     }
 
     private String parseFolderPathFormat(String folderPath) {
+        //parse to required format: /foo/bar/
         if (folderPath == null)
             return "/";
         String newPath = folderPath;

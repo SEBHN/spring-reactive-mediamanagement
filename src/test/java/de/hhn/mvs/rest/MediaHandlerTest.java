@@ -1,10 +1,11 @@
 package de.hhn.mvs.rest;
 
 import de.hhn.mvs.database.MediaCrudRepo;
-import de.hhn.mvs.model.Media;
-import de.hhn.mvs.model.MediaImpl;
-import de.hhn.mvs.model.Tag;
-import org.junit.*;
+import de.hhn.mvs.model.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -44,7 +46,14 @@ public class MediaHandlerTest {
     public TemporaryFolder folderRule = new TemporaryFolder();
 
     private Media catMedia;
+    private Media cat2MediaInFolder;
+    private Media cat3MediaInFolder;
+    private Media kittenMediaInFolder;
     private Mono<Media> catMediaSave;
+    private Mono<Media> cat2MediaInFolderMediaSave;
+    private Mono<Media> cat3MediaInFolderMediaSave;
+    private Mono<Media> kittenMediaInFolderMediaSave;
+
     private Media dogMedia;
     private Mono<Media> dogMediaSave;
     private Media anotherDog;
@@ -58,9 +67,16 @@ public class MediaHandlerTest {
         Tag meme = new Tag("meme");
 
         catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "123462345", ".jpg", "/", ANY_USER_ID, cats, cute);
+        cat2MediaInFolder = new MediaImpl(UUID.randomUUID().toString(), "Cute cate", "123", ".png", "/catPictures/", ANY_USER_ID, cute);
+        cat3MediaInFolder = new MediaImpl(UUID.randomUUID().toString(), "Cute cat", "987", ".png", "/catPictures/", ANY_USER_ID);
+        kittenMediaInFolder = new MediaImpl(UUID.randomUUID().toString(), "Cute kitten :)", "852", ".gif", "/kitten/", ANY_USER_ID, cute);
         dogMedia = new MediaImpl(UUID.randomUUID().toString(), "Such Wow", "1337", ".jpg", "/", ANY_USER_ID, doge, meme);
         anotherDog = new MediaImpl(UUID.randomUUID().toString(), "Such fabulous", "1338", ".png", "/", ANY_OTHER_USER_ID, doge, meme);
         catMediaSave = mediaRepo.save(catMedia);
+        cat2MediaInFolderMediaSave = mediaRepo.save(cat2MediaInFolder);
+        cat3MediaInFolderMediaSave = mediaRepo.save(cat3MediaInFolder);
+        kittenMediaInFolderMediaSave = mediaRepo.save(kittenMediaInFolder);
+
         dogMediaSave = mediaRepo.save(dogMedia);
         anotherDogMediaSave = mediaRepo.save(anotherDog);
     }
@@ -98,18 +114,48 @@ public class MediaHandlerTest {
     }
 
     @Test
-    @Ignore //until list is implemented properly
+    // @Ignore //until list is implemented properly
     public void list() {
         catMediaSave.block(); // ensure is saved to db
+        cat2MediaInFolderMediaSave.block();
+        cat3MediaInFolderMediaSave.block();
+        kittenMediaInFolderMediaSave.block();
         dogMediaSave.block();
         anotherDogMediaSave.block();
 
-        webClient.get().uri("/users/{userId}/media", ANY_USER_ID).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri(uriBuilder -> uriBuilder.path("/users/{userId}/media")
+                .queryParam("folder", "/").build(ANY_USER_ID))
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBodyList(Media.class)
-                .hasSize(2).contains(catMedia, dogMedia).doesNotContain(anotherDog);
+                .expectBody(FolderElements.class)
+                .consumeWith(folderElements -> {
+                    List<Subfolder> subfolders = folderElements.getResponseBody().getSubfolders();
+                    List<Media> media = folderElements.getResponseBody().getMedia();
+                    assertEquals(2, subfolders.size());
+                    assertEquals(2, media.size());
+                    assertEquals(true, media.contains(catMedia));
+                    assertEquals(true, media.contains(dogMedia));
+                    assertEquals(false, media.contains(anotherDog));
+                    assertEquals(true, subfolders.contains(new Subfolder("catPictures")));
+                    assertEquals(true, subfolders.contains(new Subfolder("kitten")));
+                });
+
+        webClient.get().uri(uriBuilder -> uriBuilder.path("/users/{userId}/media")
+                .queryParam("folder", "/catPictures").build(ANY_USER_ID))
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody(FolderElements.class)
+                .consumeWith(folderElements -> {
+                    List<Subfolder> subfolders = folderElements.getResponseBody().getSubfolders();
+                    List<Media> media = folderElements.getResponseBody().getMedia();
+                    assertEquals(0, subfolders.size());
+                    assertEquals(2, media.size());
+                    assertEquals(true, media.contains(cat2MediaInFolder));
+                    assertEquals(true, media.contains(cat3MediaInFolder));
+
+                });
     }
 
     @Test
