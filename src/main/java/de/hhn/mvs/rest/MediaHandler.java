@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
@@ -73,11 +72,9 @@ public class MediaHandler {
         String folderPath = request.queryParam("folder").orElse("/");
         String userId = request.pathVariable("userId");
 
-        //        String folderPath = request.pathVariable("folderPath");
         List<Subfolder> subfolders = new ArrayList<>();
-//        subfolders.add(new Subfolder());
         Mono<List<Subfolder>> subfolderListMono = Mono.just(subfolders);    //TODO: get from DB
-        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePathContains(userId, folderPath).collectList();    //TODO: prove query
+        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePathEndsWith(userId, parseFolderPathFormat(folderPath)).collectList();    //TODO: prove query
 
         //zip lists from mongoDb to one Object
         Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
@@ -98,7 +95,7 @@ public class MediaHandler {
                                 {
                                     String userId = request.pathVariable("userId");
                                     MediaImpl createdMedia = new MediaImpl(id.toString(), p.getName(),
-                                            p.getFileId(), p.getFileExtension(), p.getFilePath(), userId, p.getTags());
+                                            p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
                                     createdMedia.validate();
                                     return createdMedia;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -186,8 +183,9 @@ public class MediaHandler {
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(
                                 fromPublisher(
-                                        media.map(p -> new MediaImpl(id, p.getName(),
-                                                p.getFileId(), p.getFileExtension(), p.getFilePath(), userId, p.getTags()))
+                                        media.map(p ->
+                                                new MediaImpl(id, p.getName(),
+                                                        p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags()))
                                                 .flatMap(mediaRepo::save), Media.class)))
                 .switchIfEmpty(notFound().build());
     }
@@ -221,5 +219,16 @@ public class MediaHandler {
     private GridFSBucket getGridFsBucket() {
         MongoDatabase db = mongoDbFactory.getDb();
         return GridFSBuckets.create(db);
+    }
+
+    private String parseFolderPathFormat(String folderPath) {
+        if (folderPath == null)
+            return "/";
+        String newPath = folderPath;
+        if (!folderPath.endsWith("/"))
+            newPath = newPath + "/";
+        if (newPath.length() > 1 && newPath.startsWith("/"))
+            newPath = newPath.substring(1);
+        return newPath;
     }
 }
