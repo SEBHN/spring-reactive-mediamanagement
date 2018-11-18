@@ -283,7 +283,7 @@ public class MediaHandler {
                 .flatMap(newPathMono ->
                 {
                     Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath));
-                    mediaFlux.flatMap(m ->
+                    return mediaFlux.flatMap(m ->
                     {
                         String pathOfOldMedium = m.getFilePath();
                         String pathOfReanamedMedium = pathOfOldMedium
@@ -292,7 +292,7 @@ public class MediaHandler {
                         return mediaRepo.save(m);
                     })
                     .onErrorMap(error -> new InternalError("Error in Mapping to flux " + error.getMessage()));
-                    return mediaFlux;
+                    //return mediaFlux;
                 });
 
 //        Mono<ArrayList<Media>> renamedMedia2 = Mono.just(new ArrayList<Media>());
