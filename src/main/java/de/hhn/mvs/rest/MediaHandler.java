@@ -28,7 +28,10 @@ import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +39,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
@@ -219,6 +223,83 @@ public class MediaHandler {
                 .findByIdAndOwnerId(id, userId)
                 .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
                 .switchIfEmpty(notFound().build());
+    }
+
+    Mono<ServerResponse> upadteFolder(ServerRequest request) {
+        String userId = request.pathVariable("userId");
+        String oldPath = request.pathVariable("oldPath");
+        Mono<String> newPath = request.bodyToMono(String.class);
+
+//        Mono<List<Media>> renamedMedia = newPath
+//                .map(p -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath))
+//                        .collectList()
+//                        .flatMap(oldMedia -> {
+//                            //rename and save
+//                            List<Media> renamed = new ArrayList<Media>();
+//                            for (Media oldMedium : oldMedia) {
+//                                String pathOfOldMedium = oldMedium.getFilePath();
+//                                String pathOfReanamedMedium = pathOfOldMedium.replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(p));
+//                                oldMedium.setFilePath(pathOfReanamedMedium);
+//                                renamed.add(oldMedium);
+//                            }
+//
+////                        return new ArrayList<Media>();
+//                            Mono<List<Media>> saved = mediaRepo.saveAll(renamed).collectList();
+//                            return saved;
+//                        }))
+//                .flatMap(mono -> {
+//                    return mono;
+//                })
+//                ;
+//
+//        String newPaht = newPath.map(p -> {
+//            return p;
+//        });
+//
+//
+//        Flux<Media> renamedMedia = newPath
+//                .map(p -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath)))
+//                .flatMap(oldMedia -> {
+//                            //rename and save
+//                            return oldMedia.subscribe(
+//                                    m -> {
+//                                        String pathOfOldMedium = m.getFilePath();
+//                                        String pathOfReanamedMedium = pathOfOldMedium
+//                                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(p));
+//                                        m.setFilePath(pathOfReanamedMedium);
+//                                        return mediaRepo.save(m);
+//
+//                                    }
+//                            );
+//                        }
+//                );
+//        ;
+////                    return Mono.just(new< ArrayList<Media>());
+////                ));
+
+
+        Flux<String> paths = Flux.from(newPath);
+        Flux<Media> renamedMedia1 = paths
+                .flatMap(newPathMono ->
+                {
+                    Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath));
+                    mediaFlux.flatMap(m ->
+                    {
+                        String pathOfOldMedium = m.getFilePath();
+                        String pathOfReanamedMedium = pathOfOldMedium
+                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(newPathMono));
+                        m.setFilePath(pathOfReanamedMedium);
+                        return mediaRepo.save(m);
+                    })
+                    .onErrorMap(error -> new InternalError("Error in Mapping to flux " + error.getMessage()));
+                    return mediaFlux;
+                });
+
+//        Mono<ArrayList<Media>> renamedMedia2 = Mono.just(new ArrayList<Media>());
+
+        return ok().body(renamedMedia1
+                .onErrorMap(InternalError.class, e -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
+                ,Media.class);
     }
 
 

@@ -21,6 +21,8 @@ public class MediaRouter {
                 .andRoute(POST("/users/{userId}/media/{id}/upload").and(accept(MULTIPART_FORM_DATA)), mediaHandler::upload)
                 .filter(mediaHandler.illegalStateToBadRequest())
                 .andRoute(PUT("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
-                .andRoute(DELETE("/users/{userId}/media/{id}").and(accept(ALL)), mediaHandler::delete);
+                .andRoute(DELETE("/users/{userId}/media/{id}").and(accept(ALL)), mediaHandler::delete)
+                .andRoute(PUT("/users/{userId}/folder/{oldPath}").and(accept(TEXT_PLAIN)), mediaHandler::upadteFolder);
+
     }
 }
