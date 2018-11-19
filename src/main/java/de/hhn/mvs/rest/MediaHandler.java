@@ -47,6 +47,8 @@ import static org.springframework.web.reactive.function.server.ServerResponse.*;
 @Component
 public class MediaHandler {
 
+    private static final String SLASH = "/";
+
     @Autowired
     private MediaCrudRepo mediaRepo;
     @Autowired
@@ -230,54 +232,6 @@ public class MediaHandler {
         String oldPath = request.pathVariable("oldPath");
         Mono<String> newPath = request.bodyToMono(String.class);
 
-//        Mono<List<Media>> renamedMedia = newPath
-//                .map(p -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath))
-//                        .collectList()
-//                        .flatMap(oldMedia -> {
-//                            //rename and save
-//                            List<Media> renamed = new ArrayList<Media>();
-//                            for (Media oldMedium : oldMedia) {
-//                                String pathOfOldMedium = oldMedium.getFilePath();
-//                                String pathOfReanamedMedium = pathOfOldMedium.replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(p));
-//                                oldMedium.setFilePath(pathOfReanamedMedium);
-//                                renamed.add(oldMedium);
-//                            }
-//
-////                        return new ArrayList<Media>();
-//                            Mono<List<Media>> saved = mediaRepo.saveAll(renamed).collectList();
-//                            return saved;
-//                        }))
-//                .flatMap(mono -> {
-//                    return mono;
-//                })
-//                ;
-//
-//        String newPaht = newPath.map(p -> {
-//            return p;
-//        });
-//
-//
-//        Flux<Media> renamedMedia = newPath
-//                .map(p -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath)))
-//                .flatMap(oldMedia -> {
-//                            //rename and save
-//                            return oldMedia.subscribe(
-//                                    m -> {
-//                                        String pathOfOldMedium = m.getFilePath();
-//                                        String pathOfReanamedMedium = pathOfOldMedium
-//                                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(p));
-//                                        m.setFilePath(pathOfReanamedMedium);
-//                                        return mediaRepo.save(m);
-//
-//                                    }
-//                            );
-//                        }
-//                );
-//        ;
-////                    return Mono.just(new< ArrayList<Media>());
-////                ));
-
-
         Flux<String> paths = Flux.from(newPath);
         Flux<Media> renamedMedia1 = paths
                 .flatMap(newPathMono ->
@@ -291,15 +245,13 @@ public class MediaHandler {
                         m.setFilePath(pathOfReanamedMedium);
                         return mediaRepo.save(m);
                     })
-                    .onErrorMap(error -> new InternalError("Error in Mapping to flux " + error.getMessage()));
-                    //return mediaFlux;
+                            .onErrorMap(error -> new InternalError("Error in Mapping to flux " + error.getMessage()));
                 });
 
-//        Mono<ArrayList<Media>> renamedMedia2 = Mono.just(new ArrayList<Media>());
 
         return ok().body(renamedMedia1
-                .onErrorMap(InternalError.class, e -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
-                ,Media.class);
+                        .onErrorMap(InternalError.class, e -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
+                , Media.class);
     }
 
 
@@ -317,15 +269,20 @@ public class MediaHandler {
         return GridFSBuckets.create(db);
     }
 
+    /**
+     * parse to required format: /foo/bar/
+     *
+     * @param folderPath
+     * @return path in correct format
+     */
     private String parseFolderPathFormat(String folderPath) {
-        //parse to required format: /foo/bar/
-        if (folderPath == null)
-            return "/";
+        if (folderPath == null || folderPath.isEmpty())
+            return SLASH;
         String newPath = folderPath;
-        if (!folderPath.endsWith("/"))
-            newPath = newPath + "/";
-        if (newPath.length() > 1 && !newPath.startsWith("/"))
-            newPath = "/" + newPath;
+        if (!folderPath.endsWith(SLASH))
+            newPath = newPath + SLASH;
+        if (newPath.length() > 1 && !newPath.startsWith(SLASH))
+            newPath = SLASH + newPath;
         return newPath;
     }
 }
