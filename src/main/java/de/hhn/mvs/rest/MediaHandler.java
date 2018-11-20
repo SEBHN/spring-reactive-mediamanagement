@@ -76,29 +76,34 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
         String parsedfolderPath = parseFolderPathFormat(folderPath);
 
-        Mono<List<Subfolder>> subfolderListMono =
-                mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath).collectList().map(media -> {
-                    ArrayList<Subfolder> filtered = new ArrayList<>();
+        Mono<FolderElements> folderElementsMono =
+                mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath)
+                        .collectList()
+                        .map(media -> {
+                    Set<Subfolder> subfolders = new HashSet<>();
+                    List<Media> mediaInFolder = new ArrayList<>();
+
                     for (Media medium : media) {
+                        if(medium.getFilePath().equals(parsedfolderPath)){
+                            mediaInFolder.add(medium);
+                        }
                         //loop over media and extract next folder after requested one
-                        if (medium.getFilePath().length() >= parsedfolderPath.length()) {
+                        else if (medium.getFilePath().length() > parsedfolderPath.length()) {
                             String folder = medium.getFilePath();
-                            String shortend = folder.replaceFirst(parsedfolderPath, "");
-                            int indexOfNextSlash = shortend.indexOf("/");
+                            String shortened = folder.replaceFirst(parsedfolderPath, "");
+                            int indexOfNextSlash = shortened.indexOf(SLASH);
                             if (indexOfNextSlash > 0) {
-                                String subfoldername = shortend.substring(0, indexOfNextSlash);
-                                filtered.add(new Subfolder(subfoldername));
+                                String subfoldername = shortened.substring(0, indexOfNextSlash);
+                                subfolders.add(new Subfolder(subfoldername));
                             }
                         }
                     }
                     //filter duplicates
-                    return new ArrayList<Subfolder>(new HashSet<Subfolder>(filtered));
+                    ArrayList<Subfolder> filteredSubfolders = new ArrayList<Subfolder>(subfolders);
+                    return new FolderElements(filteredSubfolders, mediaInFolder);
+
                 });                                                                                      //later: optimize
 
-        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parsedfolderPath).collectList();
-
-        //zip lists from mongoDb to one Object
-        Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
 
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
@@ -234,23 +239,25 @@ public class MediaHandler {
 
         Flux<String> paths = Flux.from(newPath);
         Flux<Media> renamedMedia1 = paths
-                .flatMap(newPathMono ->
+                .flatMap(newPathString ->
                 {
                     Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath));
                     return mediaFlux.flatMap(m ->
                     {
                         String pathOfOldMedium = m.getFilePath();
                         String pathOfReanamedMedium = pathOfOldMedium
-                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(newPathMono));
+                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(newPathString));
                         m.setFilePath(pathOfReanamedMedium);
                         return mediaRepo.save(m);
                     })
-                            .onErrorMap(error -> new InternalError("Error in Mapping to flux " + error.getMessage()));
+                            .onErrorMap(error ->
+                                    new Exception("Error in Mapping to flux " + error.getMessage()));
                 });
 
 
         return ok().body(renamedMedia1
-                        .onErrorMap(InternalError.class, e -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
+                        .onErrorMap(Exception.class, e ->
+                                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
                 , Media.class);
     }
 

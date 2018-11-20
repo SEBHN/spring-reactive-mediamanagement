@@ -2,10 +2,7 @@ package de.hhn.mvs.rest;
 
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +16,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -26,6 +24,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -114,7 +113,6 @@ public class MediaHandlerTest {
     }
 
     @Test
-    // @Ignore //until list is implemented properly
     public void list() {
         catMediaSave.block(); // ensure is saved to db
         cat2MediaInFolderMediaSave.block();
@@ -309,6 +307,39 @@ public class MediaHandlerTest {
         webClient.delete().uri("/users/{userId}/media/{id}", ANY_OTHER_USER_ID, mediaId)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    @Ignore //until test ist implemented correct
+    public void renameValidFolderPath() {
+        //change folder name /catPictures/ to /catPics/
+        String oldUrl = "/catPictures/";//.replace("/", "%2F");
+        webClient.put()
+                .uri("/users/{userId}/folder/{oldPath}", ANY_USER_ID, oldUrl)
+                .body(BodyInserters.fromObject("/catPics/"))
+                .accept(MediaType.TEXT_PLAIN)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(2)
+                .consumeWith(mediaList -> {
+                    List<Media> updated = mediaList.getResponseBody();
+                    for (Media media : updated) {
+                        assertEquals("/catPics/", media.getFilePath());
+                    }
+                    cat2MediaInFolderMediaSave.subscribe(cm -> {
+                        cm.setFilePath("/catPics/");
+                        assertEquals(true, updated.contains(cm));
+                    });
+                    cat3MediaInFolderMediaSave.subscribe(cm -> {
+                        cm.setFilePath("/catPics/");
+                        assertEquals(true, updated.contains(cm));
+                    });
+                });
+    }
+
+    void moveValidFolderPath() {
+        //move folder Path /kitten/ into /catPictures/
     }
 
 
