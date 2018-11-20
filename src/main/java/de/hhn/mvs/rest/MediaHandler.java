@@ -168,7 +168,7 @@ public class MediaHandler {
                     String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
                     String fileIdString = fileId.toString();
 
-                    Mono<Media> media = mediaRepo.findById(id);
+                    Mono<Media> media = mediaRepo.findByIdAndOwnerId(id, userId);
 
                     return ok()
                             .contentType(MediaType.APPLICATION_JSON)
