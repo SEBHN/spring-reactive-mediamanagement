@@ -86,13 +86,13 @@ public class MediaHandler {
                         }
                     }
                     //filter duplicates
-                    return new ArrayList<Subfolder>(new HashSet<Subfolder>(filtered));
+                    return new ArrayList<>(new HashSet<>(filtered));
                 });                                                                                      //later: optimize
 
         Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parsedfolderPath).collectList();
 
         //zip lists from mongoDb to one Object
-        Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, (s, m) -> new FolderElements(s, m));
+        Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, FolderElements::new);
 
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
