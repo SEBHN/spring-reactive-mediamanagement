@@ -30,8 +30,6 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuple3;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,7 +37,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.web.reactive.function.BodyInserters.empty;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
@@ -80,30 +77,31 @@ public class MediaHandler {
                 mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath)
                         .collectList()
                         .map(media -> {
-                    Set<Subfolder> subfolders = new HashSet<>();
-                    List<Media> mediaInFolder = new ArrayList<>();
+                            Set<Subfolder> subfolders = new HashSet<>();
+                            List<Media> mediaInFolder = new ArrayList<>();
 
-                    for (Media medium : media) {
-                        if(medium.getFilePath().equals(parsedfolderPath)){
-                            mediaInFolder.add(medium);
-                        }
-                        //loop over media and extract next folder after requested one
-                        else if (medium.getFilePath().length() > parsedfolderPath.length()) {
-                            String folder = medium.getFilePath();
-                            String shortened = folder.replaceFirst(parsedfolderPath, "");
-                            int indexOfNextSlash = shortened.indexOf(SLASH);
-                            if (indexOfNextSlash > 0) {
-                                String subfoldername = shortened.substring(0, indexOfNextSlash);
-                                subfolders.add(new Subfolder(subfoldername));
+                            for (Media medium : media) {
+                                //add media in folder to media list
+                                if (medium.getFilePath().equals(parsedfolderPath)) {
+                                    mediaInFolder.add(medium);
+                                }
+                                //extract next folder after requested one and add it to subfolders set
+                                else if (medium.getFilePath().length() > parsedfolderPath.length()) {
+                                    String folder = medium.getFilePath();
+                                    String shortened = folder.replaceFirst(parsedfolderPath, "");
+                                    int indexOfNextSlash = shortened.indexOf(SLASH);
+                                    if (indexOfNextSlash > 0) {
+                                        String subfolderName = shortened.substring(0, indexOfNextSlash);
+                                        subfolders.add(new Subfolder(subfolderName));
+                                    }
+                                }
                             }
-                        }
-                    }
-                    //filter duplicates
-                    ArrayList<Subfolder> filteredSubfolders = new ArrayList<Subfolder>(subfolders);
-                    return new FolderElements(filteredSubfolders, mediaInFolder);
+                            //filter duplicates
+                            ArrayList<Subfolder> filteredSubfolders = new ArrayList<>(subfolders);
+                            return new FolderElements(filteredSubfolders, mediaInFolder);
 
-                });                                                                                      //later: optimize
-
+                        });
+                        //TODO: error handling. e.g. Folder does not exist -> empty return
 
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
@@ -232,7 +230,7 @@ public class MediaHandler {
                 .switchIfEmpty(notFound().build());
     }
 
-    Mono<ServerResponse> upadteFolder(ServerRequest request) {
+    Mono<ServerResponse> updateFolder(ServerRequest request) {
         String userId = request.pathVariable("userId");
         String oldPath = request.pathVariable("oldPath");
         Mono<String> newPath = request.bodyToMono(String.class);

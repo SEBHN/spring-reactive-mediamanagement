@@ -22,7 +22,7 @@ public class MediaRouter {
                 .filter(mediaHandler.illegalStateToBadRequest())
                 .andRoute(PUT("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
                 .andRoute(DELETE("/users/{userId}/media/{id}").and(accept(ALL)), mediaHandler::delete)
-                .andRoute(PUT("/users/{userId}/folder/{oldPath}").and(accept(TEXT_PLAIN)), mediaHandler::upadteFolder);
+                .andRoute(PUT("/users/{userId}/folder/{oldPath}").and(accept(TEXT_PLAIN)), mediaHandler::updateFolder);
 
     }
 }
