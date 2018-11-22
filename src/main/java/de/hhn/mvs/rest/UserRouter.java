@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.http.MediaType.*;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
@@ -11,7 +12,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 @Component
 public class UserRouter {
     @Bean
-    public RouterFunction route(UserHandler userHandler) {
+    public RouterFunction<ServerResponse> userRoute(UserHandler userHandler) {
         return RouterFunctions
                 .route(GET("/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::get)
                 .andRoute(POST("/users").and(accept(APPLICATION_JSON)), userHandler::create)
