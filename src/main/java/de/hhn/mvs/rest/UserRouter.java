@@ -12,7 +12,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 @Component
 public class UserRouter {
     @Bean
-    public RouterFunction<ServerResponse> userRoute(UserHandler userHandler) {
+    public RouterFunction<ServerResponse> UserRoute(UserHandler userHandler) {
         return RouterFunctions
                 .route(GET("/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::get)
                 .andRoute(POST("/users").and(accept(APPLICATION_JSON)), userHandler::create)
