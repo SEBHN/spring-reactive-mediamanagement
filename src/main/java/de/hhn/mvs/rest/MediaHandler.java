@@ -103,6 +103,7 @@ public class MediaHandler {
                         });
                         //TODO: error handling. e.g. Folder does not exist -> empty return
 
+
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
     }
@@ -177,7 +178,7 @@ public class MediaHandler {
                     String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
                     String fileIdString = fileId.toString();
 
-                    Mono<Media> media = mediaRepo.findById(id);
+                    Mono<Media> media = mediaRepo.findByIdAndOwnerId(id, userId);
 
                     return ok()
                             .contentType(MediaType.APPLICATION_JSON)
