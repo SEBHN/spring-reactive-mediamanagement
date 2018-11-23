@@ -114,7 +114,6 @@ public class MediaHandlerTest {
     }
 
     @Test
-    // @Ignore //until list is implemented properly
     public void list() {
         catMediaSave.block(); // ensure is saved to db
         cat2MediaInFolderMediaSave.block();
@@ -309,6 +308,60 @@ public class MediaHandlerTest {
         webClient.delete().uri("/users/{userId}/media/{id}", ANY_OTHER_USER_ID, mediaId)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    public void renameValidFolderPath() {
+        //change folder name /catPictures/ to /catPics/
+        Media catMedia2 = cat2MediaInFolderMediaSave.block();
+        Media catMedia3 = cat3MediaInFolderMediaSave.block();
+        String oldPath = "/catPictures/";
+        webClient.put()
+                .uri("/users/{userId}/folder/{oldPath}", ANY_USER_ID, oldPath)
+                .body(BodyInserters.fromObject("/catPics/"))
+                .accept(MediaType.TEXT_PLAIN)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(2)
+                .consumeWith(mediaList -> {
+                    List<Media> updated = mediaList.getResponseBody();
+                    for (Media media : updated) {
+                        assertEquals("/catPics/", media.getFilePath());
+                    }
+
+                    catMedia2.setFilePath("/catPics/");
+                    assertEquals(true, updated.contains(catMedia2));
+
+                    catMedia3.setFilePath("/catPics/");
+                    assertEquals(true, updated.contains(catMedia3));
+                });
+    }
+
+    @Test
+    public void moveValidFolderPath() {
+        //move folder Path /kitten/ into /catPictures/
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        String oldPath = "/kitten/";//.replace("/", "%2F");
+        webClient.put()
+                .uri("/users/{userId}/folder/{oldPath}", ANY_USER_ID, oldPath)
+                .body(BodyInserters.fromObject("/catPictures/kitten/"))
+                .accept(MediaType.TEXT_PLAIN)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(1)
+                .consumeWith(mediaList -> {
+                    List<Media> updated = mediaList.getResponseBody();
+                    for (Media media : updated) {
+                        assertEquals("/catPictures/kitten/", media.getFilePath());
+                    }
+
+                    kitten.setFilePath("/catPictures/kitten/");
+                    assertEquals(true, updated.contains(kitten));
+
+                });
+
     }
 
 

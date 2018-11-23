@@ -11,12 +11,6 @@ public interface MediaCrudRepo extends ReactiveMongoRepository<Media, String> {
     Mono<Media> save(Media media);
     Flux<Media> findAll();
 
-    Flux<Media> findAllByFilePath(String filePath);
-
-    Flux<Media> findAllByOwnerIdAndFilePathContains(String userId, String filePath);
-
-    Flux<Media> findAllByOwnerIdAndFilePathEndsWith(String userId, String filePath);
-
     Flux<Media> findAllByOwnerIdAndFilePath(String userId, String filePath);
 
     Flux<Media> findAllByOwnerIdAndFilePathIsStartingWith(String userId, String filePath);
@@ -24,5 +18,6 @@ public interface MediaCrudRepo extends ReactiveMongoRepository<Media, String> {
     Mono<Media> findByIdAndOwnerId(String id, String ownerId);
 
     Flux<Media> findByOwnerId(String ownerId);
+
 
 }

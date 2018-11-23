@@ -28,6 +28,7 @@ import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -42,6 +43,8 @@ import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class MediaHandler {
+
+    private static final String SLASH = "/";
 
     @Autowired
     private MediaCrudRepo mediaRepo;
@@ -70,29 +73,37 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
         String parsedfolderPath = parseFolderPathFormat(folderPath);
 
-        Mono<List<Subfolder>> subfolderListMono =
-                mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath).collectList().map(media -> {
-                    ArrayList<Subfolder> filtered = new ArrayList<>();
-                    for (Media medium : media) {
-                        //loop over media and extract next folder after requested one
-                        if (medium.getFilePath().length() >= parsedfolderPath.length()) {
-                            String folder = medium.getFilePath();
-                            String shortend = folder.replaceFirst(parsedfolderPath, "");
-                            int indexOfNextSlash = shortend.indexOf("/");
-                            if (indexOfNextSlash > 0) {
-                                String subfoldername = shortend.substring(0, indexOfNextSlash);
-                                filtered.add(new Subfolder(subfoldername));
+        Mono<FolderElements> folderElementsMono =
+                mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath)
+                        .collectList()
+                        .map(media -> {
+                            Set<Subfolder> subfolders = new HashSet<>();
+                            List<Media> mediaInFolder = new ArrayList<>();
+
+                            for (Media medium : media) {
+
+                                if (medium.getFilePath().equals(parsedfolderPath)) {
+                                    //add media in folder to media list
+                                    mediaInFolder.add(medium);
+
+                                } else if (medium.getFilePath().length() > parsedfolderPath.length()) {
+                                    //extract next folder after requested one and add it to subfolders set
+                                    String folder = medium.getFilePath();
+                                    String shortened = folder.replaceFirst(parsedfolderPath, "");
+                                    int indexOfNextSlash = shortened.indexOf(SLASH);
+                                    if (indexOfNextSlash > 0) {
+                                        String subfolderName = shortened.substring(0, indexOfNextSlash);
+                                        subfolders.add(new Subfolder(subfolderName));
+                                    }
+                                }
                             }
-                        }
-                    }
-                    //filter duplicates
-                    return new ArrayList<>(new HashSet<>(filtered));
-                });                                                                                      //later: optimize
+                            //filter duplicates
+                            ArrayList<Subfolder> filteredSubfolders = new ArrayList<>(subfolders);
+                            return new FolderElements(filteredSubfolders, mediaInFolder);
 
-        Mono<List<Media>> mediaListMono = mediaRepo.findAllByOwnerIdAndFilePath(userId, parsedfolderPath).collectList();
+                        });
+        //TODO: error handling. e.g. Folder does not exist -> empty return
 
-        //zip lists from mongoDb to one Object
-        Mono<FolderElements> folderElementsMono = Mono.zip(subfolderListMono, mediaListMono, FolderElements::new);
 
         return ok().contentType(MediaType.APPLICATION_JSON)
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
@@ -221,6 +232,35 @@ public class MediaHandler {
                 .switchIfEmpty(notFound().build());
     }
 
+    Mono<ServerResponse> updateFolder(ServerRequest request) {
+        String userId = request.pathVariable("userId");
+        String oldPath = request.pathVariable("oldPath");
+        Mono<String> newPath = request.bodyToMono(String.class);
+
+        Flux<String> paths = Flux.from(newPath);
+        Flux<Media> renamedMedia1 = paths
+                .flatMap(newPathString ->
+                {
+                    Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath));
+                    return mediaFlux.flatMap(m ->
+                    {
+                        String pathOfOldMedium = m.getFilePath();
+                        String pathOfReanamedMedium = pathOfOldMedium
+                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(newPathString));
+                        m.setFilePath(pathOfReanamedMedium);
+                        return mediaRepo.save(m);
+                    })
+                            .onErrorMap(error ->
+                                    new Exception("Error in Mapping to flux " + error.getMessage()));
+                });
+
+
+        return ok().body(renamedMedia1
+                        .onErrorMap(Exception.class, e ->
+                                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
+                , Media.class);
+    }
+
 
     /**
      * for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
@@ -236,15 +276,20 @@ public class MediaHandler {
         return GridFSBuckets.create(db);
     }
 
+    /**
+     * parse to required format: /foo/bar/
+     *
+     * @param folderPath
+     * @return path in correct format
+     */
     private String parseFolderPathFormat(String folderPath) {
-        //parse to required format: /foo/bar/
-        if (folderPath == null)
-            return "/";
+        if (folderPath == null || folderPath.isEmpty())
+            return SLASH;
         String newPath = folderPath;
-        if (!folderPath.endsWith("/"))
-            newPath = newPath + "/";
-        if (newPath.length() > 1 && !newPath.startsWith("/"))
-            newPath = "/" + newPath;
+        if (!folderPath.endsWith(SLASH))
+            newPath = newPath + SLASH;
+        if (newPath.length() > 1 && !newPath.startsWith(SLASH))
+            newPath = SLASH + newPath;
         return newPath;
     }
 }
