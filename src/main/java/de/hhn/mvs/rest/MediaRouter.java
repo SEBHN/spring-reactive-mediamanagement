@@ -13,7 +13,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 public class MediaRouter {
 
     @Bean
-    public RouterFunction<ServerResponse> MediaRoute(MediaHandler mediaHandler) {
+    public RouterFunction<ServerResponse> mediaRoute(MediaHandler mediaHandler) {
         return RouterFunctions
                 .route(GET("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::get)
                 .andRoute(GET("/users/{userId}/media/{id}/download").and(accept(APPLICATION_OCTET_STREAM)), mediaHandler::download)
