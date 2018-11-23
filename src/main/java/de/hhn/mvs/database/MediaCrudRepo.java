@@ -1,7 +1,6 @@
 package de.hhn.mvs.database;
 
 import de.hhn.mvs.model.Media;
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;

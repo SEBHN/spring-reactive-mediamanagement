@@ -81,12 +81,13 @@ public class MediaHandler {
                             List<Media> mediaInFolder = new ArrayList<>();
 
                             for (Media medium : media) {
-                                //add media in folder to media list
+
                                 if (medium.getFilePath().equals(parsedfolderPath)) {
+                                    //add media in folder to media list
                                     mediaInFolder.add(medium);
-                                }
-                                //extract next folder after requested one and add it to subfolders set
-                                else if (medium.getFilePath().length() > parsedfolderPath.length()) {
+
+                                } else if (medium.getFilePath().length() > parsedfolderPath.length()) {
+                                    //extract next folder after requested one and add it to subfolders set
                                     String folder = medium.getFilePath();
                                     String shortened = folder.replaceFirst(parsedfolderPath, "");
                                     int indexOfNextSlash = shortened.indexOf(SLASH);
@@ -101,7 +102,7 @@ public class MediaHandler {
                             return new FolderElements(filteredSubfolders, mediaInFolder);
 
                         });
-                        //TODO: error handling. e.g. Folder does not exist -> empty return
+        //TODO: error handling. e.g. Folder does not exist -> empty return
 
 
         return ok().contentType(MediaType.APPLICATION_JSON)

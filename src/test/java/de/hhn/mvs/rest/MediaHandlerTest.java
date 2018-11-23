@@ -315,7 +315,7 @@ public class MediaHandlerTest {
         //change folder name /catPictures/ to /catPics/
         Media catMedia2 = cat2MediaInFolderMediaSave.block();
         Media catMedia3 = cat3MediaInFolderMediaSave.block();
-        String oldPath = "/catPictures/";//.replace("/", "%2F");
+        String oldPath = "/catPictures/";
         webClient.put()
                 .uri("/users/{userId}/folder/{oldPath}", ANY_USER_ID, oldPath)
                 .body(BodyInserters.fromObject("/catPics/"))
