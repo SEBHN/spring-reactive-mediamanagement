@@ -1,5 +1,16 @@
 package de.hhn.mvs.rest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
@@ -31,15 +42,12 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.*;
+import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
+import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
 public class MediaHandler {
@@ -67,7 +75,15 @@ public class MediaHandler {
     }
 
     Mono<ServerResponse> list(ServerRequest request) {
-        String folderPath = request.queryParam("folder").orElse("/");
+        String userId = request.pathVariable("userId");
+
+        return ok().contentType(MediaType.APPLICATION_JSON)
+                   .body(mediaRepo.findAllByOwnerId(userId), Media.class)
+                   .switchIfEmpty(notFound().build());
+    }
+
+    Mono<ServerResponse> listFolderContent(ServerRequest request) {
+        String folderPath = request.pathVariable("folderPath");
         String userId = request.pathVariable("userId");
         String parsedfolderPath = parseFolderPathFormat(folderPath);
 
@@ -275,7 +291,8 @@ public class MediaHandler {
 
     /**
      * Checks from two related Folders if the possibleSubFolderfilePath is a subFolder of it and retunrs it
-     * @param sourcePath - /foo/bar
+     *
+     * @param sourcePath                - /foo/bar
      * @param possibleSubFolderfilePath /foo/bar/subfolder
      * @return Optional<SubFolder> with subFolder
      */
@@ -287,7 +304,7 @@ public class MediaHandler {
         if (indexOfNextSlash > 0) {
             String subfolderName = shortened.substring(0, indexOfNextSlash);
             subfolderOptional = Optional.of(new Subfolder(subfolderName));
-        }else{
+        } else {
             subfolderOptional = Optional.empty();
         }
         return subfolderOptional;
