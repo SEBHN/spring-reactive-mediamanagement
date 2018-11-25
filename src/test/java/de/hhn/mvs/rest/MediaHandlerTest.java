@@ -54,15 +54,15 @@ public class MediaHandlerTest {
     private Media cat2MediaInFolder;
     private Media cat3MediaInFolder;
     private Media kittenMediaInFolder;
+    private Media dogMedia;
+    private Media anotherDog;
     private Mono<Media> catMediaSave;
     private Mono<Media> cat2MediaInFolderMediaSave;
     private Mono<Media> cat3MediaInFolderMediaSave;
     private Mono<Media> kittenMediaInFolderMediaSave;
-
-    private Media dogMedia;
     private Mono<Media> dogMediaSave;
-    private Media anotherDog;
     private Mono<Media> anotherDogMediaSave;
+
     private List<Mono<Media>> savedMedia;
 
     @Before
@@ -340,57 +340,6 @@ public class MediaHandlerTest {
                  .expectStatus().isNotFound();
     }
 
-    @Test
-    public void renameValidFolderPath() {
-        //change folder name /catPictures/ to /catPics/
-        Media catMedia2 = cat2MediaInFolderMediaSave.block();
-        Media catMedia3 = cat3MediaInFolderMediaSave.block();
-        String oldPath = "/catPictures/";
-        webClient.put()
-                 .uri("/users/{userId}/folders/{oldPath}", ANY_USER_ID, oldPath)
-                 .body(BodyInserters.fromObject("/catPics/"))
-                 .accept(MediaType.TEXT_PLAIN)
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectBodyList(Media.class)
-                 .hasSize(2)
-                 .consumeWith(mediaList -> {
-                     List<Media> updated = mediaList.getResponseBody();
-                     for (Media media : updated) {
-                         assertEquals("/catPics/", media.getFilePath());
-                     }
-
-                     catMedia2.setFilePath("/catPics/");
-                     assertEquals(true, updated.contains(catMedia2));
-
-                     catMedia3.setFilePath("/catPics/");
-                     assertEquals(true, updated.contains(catMedia3));
-                 });
-    }
-
-    @Test
-    public void moveValidFolderPath() {
-        //move folder Path /kitten/ into /catPictures/
-        Media kitten = kittenMediaInFolderMediaSave.block();
-        String oldPath = "/kitten/";//.replace("/", "%2F");
-        webClient.put()
-                 .uri("/users/{userId}/folders/{oldPath}", ANY_USER_ID, oldPath)
-                 .body(BodyInserters.fromObject("/catPictures/kitten/"))
-                 .accept(MediaType.TEXT_PLAIN)
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectBodyList(Media.class)
-                 .hasSize(1)
-                 .consumeWith(mediaList -> {
-                     List<Media> updated = mediaList.getResponseBody();
-                     for (Media media : updated) {
-                         assertEquals("/catPictures/kitten/", media.getFilePath());
-                     }
-
-                     kitten.setFilePath("/catPictures/kitten/");
-                     assertEquals(true, updated.contains(kitten));
-                 });
-    }
 
     private EntityExchangeResult<Media> createMedia(Media media) {
         return webClient.post().uri("/users/{userId}/media", ANY_USER_ID)

@@ -39,9 +39,10 @@ import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static de.hhn.mvs.rest.FolderUtils.SLASH;
+import static de.hhn.mvs.rest.FolderUtils.parseFolderPathFormat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
@@ -51,8 +52,6 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 
 @Component
 public class MediaHandler {
-
-    private static final String SLASH = "/";
 
     @Autowired
     private MediaCrudRepo mediaRepo;
@@ -232,34 +231,6 @@ public class MediaHandler {
                 .switchIfEmpty(notFound().build());
     }
 
-    Mono<ServerResponse> updateFolder(ServerRequest request) {
-        String userId = request.pathVariable("userId");
-        String oldPath = request.pathVariable("oldPath");
-        Mono<String> newPath = request.bodyToMono(String.class);
-
-        Flux<String> paths = Flux.from(newPath);
-        Flux<Media> renamedMedia1 = paths
-                .flatMap(newPathString ->
-                {
-                    Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath));
-                    return mediaFlux.flatMap(m ->
-                    {
-                        String pathOfOldMedium = m.getFilePath();
-                        String pathOfReanamedMedium = pathOfOldMedium
-                                .replaceFirst(parseFolderPathFormat(oldPath), parseFolderPathFormat(newPathString));
-                        m.setFilePath(pathOfReanamedMedium);
-                        return mediaRepo.save(m);
-                    })
-                                    .onErrorMap(error ->
-                                            new Exception("Error in Mapping to flux " + error.getMessage()));
-                });
-
-        return ok().body(renamedMedia1
-                        .onErrorMap(Exception.class, e ->
-                                new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()))
-                , Media.class);
-    }
-
     /**
      * for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
      */
@@ -271,22 +242,6 @@ public class MediaHandler {
     private GridFSBucket getGridFsBucket() {
         MongoDatabase db = mongoDbFactory.getDb();
         return GridFSBuckets.create(db);
-    }
-
-    /**
-     * parse to required format: /foo/bar/
-     *
-     * @return path in correct format
-     */
-    private String parseFolderPathFormat(String folderPath) {
-        if (folderPath == null || folderPath.isEmpty())
-            return SLASH;
-        String newPath = folderPath;
-        if (!folderPath.endsWith(SLASH))
-            newPath = newPath + SLASH;
-        if (newPath.length() > 1 && !newPath.startsWith(SLASH))
-            newPath = SLASH + newPath;
-        return newPath;
     }
 
     /**
