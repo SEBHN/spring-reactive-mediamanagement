@@ -1,43 +1,23 @@
 package de.hhn.mvs.model;
 
-public final class User {
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-    private String id;
-    private boolean admin;
-    private String email;
-    private String password;
-    private String token;
+@JsonDeserialize(as = UserImpl.class)
+public interface User {
 
+    String getId();
 
-    public String getId() {
-        return id;
-    }
+    boolean isAdmin();
 
-    public boolean isAdmin() {
-        return admin;
-    }
+    String getEmail();
 
-    public String getEmail() {
-        return email;
-    }
+    void setEmail(String email);
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    String getPassword();
 
-    public String getPassword() {
-        return password;
-    }
+    void setPassword(String password);
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    String getToken();
 
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
+    void setToken(String token);
 }

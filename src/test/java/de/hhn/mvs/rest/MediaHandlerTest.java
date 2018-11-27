@@ -310,11 +310,11 @@ public class MediaHandlerTest {
 
     @Test
     public void updateNonExistingMedia() {
-        webClient.post().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
-                 .contentType(MediaType.APPLICATION_JSON)
-                 .body(BodyInserters.fromObject(dogMedia))
-                 .exchange()
-                 .expectStatus().isNotFound();
+        webClient.put().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(dogMedia))
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
