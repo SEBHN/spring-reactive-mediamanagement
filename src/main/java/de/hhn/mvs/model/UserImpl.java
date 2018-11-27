@@ -22,7 +22,7 @@ public final class UserImpl implements User{
         this.id = id;
         this.admin = admin;
         this.email = email;
-        this.password = password;
+        this.password = String.valueOf(password.hashCode());
         this.token = token;
     }
 
@@ -53,7 +53,7 @@ public final class UserImpl implements User{
 
     @Override
     public void setPassword(String password) {
-        this.password = password;
+        this.password = String.valueOf(password.hashCode());
     }
 
     @Override

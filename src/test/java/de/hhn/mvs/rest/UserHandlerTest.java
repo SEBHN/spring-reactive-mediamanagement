@@ -35,11 +35,13 @@ public class UserHandlerTest {
     private User testUser;
     private User testUser2;
     private Mono<User> userSave;
+    private String passwordU1 = "testPassword123";
+    private String passwordU2 = "testPassword987";
 
     @Before
     public void setUp() {
-        testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", "testPassword123", "Token123");
-        testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", "testPassword987", "Token987");
+        testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", passwordU1, "Token123");
+        testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", passwordU2, "Token987");
 
         userSave = userRepo.save(testUser);
     }
@@ -48,7 +50,6 @@ public class UserHandlerTest {
     public void cleanUp() {
         userRepo.deleteAll().block();
     }
-
 
     @Test
     public void createUser(){
@@ -61,7 +62,7 @@ public class UserHandlerTest {
                 .consumeWith(returnedUserResult -> {
                     User returnedUser = returnedUserResult.getResponseBody();
                     assertNotEquals(null, returnedUser);
-                    //assertEquals(testUser.getId(), returnedUser.getId());// Vergleich nicht möglich da ID generiert wird
+                    assertEquals(testUser.getId(), returnedUser.getId());// Vergleich nicht möglich da ID generiert wird
                     assertEquals(testUser.getEmail(), returnedUser.getEmail());
                     assertEquals(testUser.isAdmin(), returnedUser.isAdmin());
                     assertEquals(testUser.getPassword(), returnedUser.getPassword());
@@ -95,14 +96,14 @@ public class UserHandlerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(User.class)
-                .consumeWith(returnedMediaResult -> {
-                    User returnedMedia = returnedMediaResult.getResponseBody();
-                    assertNotEquals(null, returnedMedia);
-                    assertEquals(testUser2.getId(), returnedMedia.getId());
-                    assertEquals(testUser2.isAdmin(), returnedMedia.isAdmin());
-                    assertEquals(testUser2.getEmail(), returnedMedia.getEmail());
-                    assertEquals(testUser2.getPassword(), returnedMedia.getPassword());
-                    assertEquals(testUser2.getToken(), returnedMedia.getToken());
+                .consumeWith(returnedUserResult -> {
+                    User returnedUser = returnedUserResult.getResponseBody();
+                    assertNotEquals(null, returnedUser);
+                    assertEquals(testUser2.getId(), returnedUser.getId());
+                    assertEquals(testUser2.isAdmin(), returnedUser.isAdmin());
+                    assertEquals(testUser2.getEmail(), returnedUser.getEmail());
+                    assertEquals(testUser2.getPassword(), returnedUser.getPassword());
+                    assertEquals(testUser2.getToken(), returnedUser.getToken());
                 });
     }
 

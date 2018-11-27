@@ -86,9 +86,13 @@ public class UserHandler {
 
         return userRepo
                 .findById(userId)
-                .flatMap(existingMedia -> noContent().build(userRepo.delete(existingMedia)))
+                .flatMap(existingUser -> noContent().build(userRepo.delete(existingUser)))
                 .switchIfEmpty(notFound().build());
     }
+
+    //Mono<ServerResponse> auth(ServerRequest request){
+    //    String userId = request.pathVariable("userId");
+    //}
 
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
