@@ -26,6 +26,12 @@ public final class UserImpl implements User {
         this.token = token;
     }
 
+    public User copy() {
+        User copiedUser = new UserImpl(this.id, this.admin, this.email, this.hashedPassword, token);
+        copiedUser.setHashedPassword(this.hashedPassword);
+        return copiedUser;
+    }
+
     @Override
     public String getId() {
         return id;

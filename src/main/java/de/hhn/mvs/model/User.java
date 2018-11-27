@@ -22,4 +22,6 @@ public interface User {
     String getToken();
 
     void setToken(String token);
+
+    User copy();
 }

@@ -2,7 +2,6 @@ package de.hhn.mvs.rest;
 
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
-import de.hhn.mvs.model.UserImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ public class UserHandler {
     @Autowired
     private UserCrudRepo userRepo;
 
-    Mono<ServerResponse> get(ServerRequest request){
+    Mono<ServerResponse> get(ServerRequest request) {
         String userId = request.pathVariable("userId");
         return userRepo.findById(userId)
                 .flatMap(user -> ok().contentType(APPLICATION_JSON).body(fromObject(user)))
@@ -43,8 +42,7 @@ public class UserHandler {
                         fromPublisher(
                                 user.map(p ->
                                 {
-                                    UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
-                                            p.getEmail(), p.getHashedPassword(), p.getToken());
+                                    User createdUser = p.copy();
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -69,8 +67,7 @@ public class UserHandler {
                         .body(
                                 fromPublisher(
                                         user.map(p ->
-                                                new UserImpl(userId, p.isAdmin(),
-                                                        p.getEmail(), p.getHashedPassword(), p.getToken()))
+                                                p.copy())
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }
