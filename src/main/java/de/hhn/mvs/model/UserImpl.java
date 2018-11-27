@@ -6,23 +6,23 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Objects;
 
 @Document
-public final class UserImpl implements User{
+public final class UserImpl implements User {
     @Id
     private String id;
     private boolean admin;
     private String email;
-    private String password;
+    private String hashedPassword;
     private String token;
 
-    public UserImpl(){
+    public UserImpl() {
 
     }
 
-    public UserImpl(String id, boolean admin, String email, String password, String token){
+    public UserImpl(String id, boolean admin, String email, String password, String token) {
         this.id = id;
         this.admin = admin;
         this.email = email;
-        this.password = String.valueOf(password.hashCode());
+        this.hashedPassword = String.valueOf(password.hashCode());
         this.token = token;
     }
 
@@ -47,13 +47,18 @@ public final class UserImpl implements User{
     }
 
     @Override
-    public String getPassword() {
-        return password;
+    public String getHashedPassword() {
+        return hashedPassword;
+    }
+
+    @Override
+    public void setHashedPassword(String password) {
+        this.hashedPassword = password;
     }
 
     @Override
     public void setPassword(String password) {
-        this.password = String.valueOf(password.hashCode());
+        this.hashedPassword = String.valueOf(password.hashCode());
     }
 
     @Override
@@ -67,31 +72,31 @@ public final class UserImpl implements User{
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "User{" +
                 "id='" + id + "\'" +
                 "admin='" + admin + "\'" +
                 "email='" + email + "\'" +
-                "password='" + password + "\'" +
+                "password='" + hashedPassword + "\'" +
                 "token='" + token + "\'" +
                 "}";
     }
 
     @Override
-    public boolean equals(Object o){
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserImpl user = (UserImpl) o;
         return Objects.equals(id, user.id) &&
                 Objects.equals(admin, user.admin) &&
                 Objects.equals(email, user.email) &&
-                Objects.equals(password, user.password) &&
+                Objects.equals(hashedPassword, user.hashedPassword) &&
                 Objects.equals(token, user.token);
     }
 
     @Override
-    public int hashCode(){
-        return Objects.hash(id, admin, email, password, token);
+    public int hashCode() {
+        return Objects.hash(id, admin, email, hashedPassword, token);
     }
 
 }

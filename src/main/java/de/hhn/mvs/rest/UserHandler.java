@@ -19,9 +19,7 @@ import java.util.UUID;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class UserHandler {
@@ -46,7 +44,7 @@ public class UserHandler {
                                 user.map(p ->
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
-                                            p.getEmail(), p.getPassword(), p.getToken());
+                                            p.getEmail(), p.getHashedPassword(), p.getToken());
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -72,7 +70,7 @@ public class UserHandler {
                                 fromPublisher(
                                         user.map(p ->
                                                 new UserImpl(userId, p.isAdmin(),
-                                                        p.getEmail(), p.getPassword(),  p.getToken()))
+                                                        p.getEmail(), p.getHashedPassword(), p.getToken()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }

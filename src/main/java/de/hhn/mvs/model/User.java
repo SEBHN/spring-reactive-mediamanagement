@@ -13,9 +13,11 @@ public interface User {
 
     void setEmail(String email);
 
-    String getPassword();
+    String getHashedPassword();
 
-    void setPassword(String password);
+    void setHashedPassword(String alreadyHashedPassword);
+
+    void setPassword(String passwordToHash);
 
     String getToken();
 

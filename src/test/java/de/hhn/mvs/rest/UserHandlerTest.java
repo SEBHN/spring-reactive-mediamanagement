@@ -62,10 +62,9 @@ public class UserHandlerTest {
                 .consumeWith(returnedUserResult -> {
                     User returnedUser = returnedUserResult.getResponseBody();
                     assertNotEquals(null, returnedUser);
-                    assertEquals(testUser.getId(), returnedUser.getId());// Vergleich nicht möglich da ID generiert wird
                     assertEquals(testUser.getEmail(), returnedUser.getEmail());
                     assertEquals(testUser.isAdmin(), returnedUser.isAdmin());
-                    assertEquals(testUser.getPassword(), returnedUser.getPassword());
+                    assertEquals(testUser.getHashedPassword(), returnedUser.getHashedPassword());
                     assertEquals(testUser.getToken(), returnedUser.getToken());
                 });
     }
@@ -102,7 +101,7 @@ public class UserHandlerTest {
                     assertEquals(testUser2.getId(), returnedUser.getId());
                     assertEquals(testUser2.isAdmin(), returnedUser.isAdmin());
                     assertEquals(testUser2.getEmail(), returnedUser.getEmail());
-                    assertEquals(testUser2.getPassword(), returnedUser.getPassword());
+                    assertEquals(testUser2.getHashedPassword(), returnedUser.getHashedPassword());
                     assertEquals(testUser2.getToken(), returnedUser.getToken());
                 });
     }
