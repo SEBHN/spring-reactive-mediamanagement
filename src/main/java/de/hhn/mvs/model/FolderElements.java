@@ -1,9 +1,5 @@
 package de.hhn.mvs.model;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,11 +45,9 @@ public class FolderElements {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FolderElements externalFolderElements = (FolderElements) o;
-        List<Subfolder> subfolders = ((FolderElements) o).getSubfolders();
-        List<Media> media = ((FolderElements) o).getMedia();
-        if (Objects.equals(this.media, media) && Objects.equals(this.subfolders, subfolders))
-            return true;
-        else return false;
+        List<Subfolder> subFolders = externalFolderElements.getSubfolders();
+        List<Media> media = externalFolderElements.getMedia();
+        return Objects.equals(this.media, media) && Objects.equals(this.subfolders, subFolders);
     }
 
     @Override
