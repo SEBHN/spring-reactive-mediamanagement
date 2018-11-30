@@ -1,6 +1,7 @@
 package de.hhn.mvs.rest;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
@@ -17,6 +18,7 @@ public class CorsFilter {
     CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.applyPermitDefaultValues();
+        corsConfig.addAllowedMethod(HttpMethod.PUT);
         corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_LOCALHOST));
 
         UrlBasedCorsConfigurationSource source =
