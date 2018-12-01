@@ -37,9 +37,11 @@ deploy_production:
   stage: deploy
   environment: Production
   image: dxjoke/googlecloud-sdk-java-docker
+  pull_policy: always
   only:
     - develop
     - master
+    - tryToAvoidCors
   script:
     - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
     - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
