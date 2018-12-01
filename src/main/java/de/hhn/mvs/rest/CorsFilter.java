@@ -19,6 +19,7 @@ public class CorsFilter {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.applyPermitDefaultValues();
         corsConfig.addAllowedMethod(HttpMethod.PUT);
+        corsConfig.addAllowedMethod(HttpMethod.DELETE);
         corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_LOCALHOST));
 
         UrlBasedCorsConfigurationSource source =
