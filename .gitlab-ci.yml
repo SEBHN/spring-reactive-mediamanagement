@@ -36,8 +36,9 @@ test:
 deploy_production:
   stage: deploy
   environment: Production
-  image: dxjoke/googlecloud-sdk-java-docker
-  pull_policy: always
+  image:
+    name: dxjoke/googlecloud-sdk-java-docker
+    pull_policy: always
   only:
     - develop
     - master
