@@ -13,6 +13,7 @@ import java.util.Arrays;
 public class CorsFilter {
 
     private static final String FRONTEND_LOCALHOST = "http://localhost:4200";
+    private static final String FRONTEND_STAGING = "https://sebhn.github.io/mvs/";
 
     @Bean
     CorsWebFilter corsWebFilter() {
@@ -20,7 +21,7 @@ public class CorsFilter {
         corsConfig.applyPermitDefaultValues();
         corsConfig.addAllowedMethod(HttpMethod.PUT);
         corsConfig.addAllowedMethod(HttpMethod.DELETE);
-        corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_LOCALHOST));
+        corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_LOCALHOST, FRONTEND_STAGING));
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
