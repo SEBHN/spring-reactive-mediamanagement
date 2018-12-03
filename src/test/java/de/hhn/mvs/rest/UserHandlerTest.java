@@ -1,7 +1,7 @@
 package de.hhn.mvs.rest;
 
 import de.hhn.mvs.database.UserCrudRepo;
-import de.hhn.mvs.model.User;
+import de.hhn.mvs.model.*;
 import de.hhn.mvs.model.UserImpl;
 import org.junit.After;
 import org.junit.Before;
