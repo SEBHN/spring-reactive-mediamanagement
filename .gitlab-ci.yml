@@ -3,12 +3,12 @@ image: java:8-jdk
 stages:
   - build
   - test
+  - deploy
 
 before_script:
-#  - echo `pwd` # debug
-#  - echo "$CI_BUILD_NAME, $CI_BUILD_REF_NAME $CI_BUILD_STAGE" # debug
   - export GRADLE_USER_HOME=`pwd`/.gradle
   - chmod +x ./gradlew
+
 
 cache:
   paths:
@@ -29,5 +29,23 @@ test:
   artifacts:
     reports:
       junit: build/test-results/test/TEST-*.xml
-after_script:
-  - echo "End CI"
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 hrs
+
+deploy_production:
+  stage: deploy
+  environment: Production
+  image: dxjoke/googlecloud-sdk-java-docker:jdk8
+  only:
+    - develop
+    - master
+  script:
+    - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
+    - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+    - gcloud config set project $PROJECT_ID_PRODUCTION
+    - ./gradlew appengineDeploy
+
+  after_script:
+    - rm /tmp/$CI_PIPELINE_ID.json
+
