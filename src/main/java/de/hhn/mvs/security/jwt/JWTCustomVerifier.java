@@ -17,7 +17,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.hhn.mvs.auth.jwt;
+package de.hhn.mvs.security.jwt;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
@@ -65,7 +65,7 @@ public class JWTCustomVerifier {
 
     private MACVerifier buildJWSVerifier() {
         try {
-            return new MACVerifier(JWTSecrets.DEFAULT_SECRET);
+            return new MACVerifier(de.hhn.mvs.security.jwt.JWTSecrets.DEFAULT_SECRET);
         } catch (JOSEException e) {
             e.printStackTrace();
             return null;

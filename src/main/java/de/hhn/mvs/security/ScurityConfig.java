@@ -1,10 +1,9 @@
-package de.hhn.mvs.auth;
+package de.hhn.mvs.security;
 
-import de.hhn.mvs.auth.basic.BasicAuthenticationSuccessHandler;
-import de.hhn.mvs.auth.bearer.BearerTokenReactiveAuthenticationManager;
-import de.hhn.mvs.auth.bearer.ServerHttpBearerAuthenticationConverter;
 import de.hhn.mvs.database.UserCrudRepo;
-import org.springframework.beans.factory.annotation.Autowired;
+import de.hhn.mvs.security.basic.BasicAuthenticationSuccessHandler;
+import de.hhn.mvs.security.bearer.BearerTokenReactiveAuthenticationManager;
+import de.hhn.mvs.security.bearer.ServerHttpBearerAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
@@ -69,10 +68,12 @@ public class ScurityConfig {
             .addFilterAt(basicAuthenticationFilter(), SecurityWebFiltersOrder.HTTP_BASIC)
 
             .authorizeExchange()
-            .pathMatchers("/api/**")
-            .authenticated()
+            .pathMatchers("/users/{userId}/**").access(this::currentUserMatchesPath)
             .and()
-            .addFilterAt(bearerAuthenticationFilter(), SecurityWebFiltersOrder.AUTHENTICATION);
+            .addFilterAt(bearerAuthenticationFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
+
+            .formLogin().loginPage("/login");
+
         return http.build();
     }
 
@@ -84,7 +85,7 @@ public class ScurityConfig {
 
     @Bean
     public ReactiveUserDetailsService userDetailsService(UserCrudRepo users) {
-        return (username) -> users.findByUsername(username).cast(UserDetails.class);
+        return (username) -> users.findByEmail(username).cast(UserDetails.class);
     }
 
 

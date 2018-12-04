@@ -1,13 +1,14 @@
 package de.hhn.mvs.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Set;
 
 @JsonDeserialize(as = UserImpl.class)
-public interface User {
+public interface User extends UserDetails {
 
     String getId();
-
-    boolean isAdmin();
 
     String getEmail();
 
@@ -20,4 +21,12 @@ public interface User {
     String getToken();
 
     void setToken(String token);
+
+    Set<String> getRoles();
+
+    void setRoles(Set<String> roles);
+
+    void addRole(String role);
+
+    void addRoles(Set<String> roles);
 }

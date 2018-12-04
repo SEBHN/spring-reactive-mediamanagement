@@ -17,9 +17,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.hhn.mvs.auth.service;
+package de.hhn.mvs.security.service;
 
-import de.hhn.mvs.auth.domain.FormattedMessage;
+import de.hhn.mvs.security.domain.FormattedMessage;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 

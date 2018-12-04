@@ -17,7 +17,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.hhn.mvs.auth.domain;
+package de.hhn.mvs.security.domain;
 
 public class FormattedMessage {
 

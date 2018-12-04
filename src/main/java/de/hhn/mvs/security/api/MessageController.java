@@ -17,10 +17,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.hhn.mvs.auth.api;
+package de.hhn.mvs.security.api;
 
-import de.hhn.mvs.auth.domain.FormattedMessage;
-import de.hhn.mvs.auth.service.MessageService;
+import de.hhn.mvs.security.domain.FormattedMessage;
+import de.hhn.mvs.security.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -38,8 +38,8 @@ public class UserHandlerTest {
 
     @Before
     public void setUp() {
-        testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", "testPassword123", "Token123");
-        testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", "testPassword987", "Token987");
+        testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld", "testPassword123", "Token123");
+        testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", "testPassword987", "Token987");
 
         userSave = userRepo.save(testUser);
     }
@@ -63,7 +63,6 @@ public class UserHandlerTest {
                     assertNotEquals(null, returnedUser);
                     //assertEquals(testUser.getId(), returnedUser.getId());// Vergleich nicht möglich da ID generiert wird
                     assertEquals(testUser.getEmail(), returnedUser.getEmail());
-                    assertEquals(testUser.isAdmin(), returnedUser.isAdmin());
                     assertEquals(testUser.getPassword(), returnedUser.getPassword());
                     assertEquals(testUser.getToken(), returnedUser.getToken());
                 });
@@ -99,7 +98,6 @@ public class UserHandlerTest {
                     User returnedMedia = returnedMediaResult.getResponseBody();
                     assertNotEquals(null, returnedMedia);
                     assertEquals(testUser2.getId(), returnedMedia.getId());
-                    assertEquals(testUser2.isAdmin(), returnedMedia.isAdmin());
                     assertEquals(testUser2.getEmail(), returnedMedia.getEmail());
                     assertEquals(testUser2.getPassword(), returnedMedia.getPassword());
                     assertEquals(testUser2.getToken(), returnedMedia.getToken());

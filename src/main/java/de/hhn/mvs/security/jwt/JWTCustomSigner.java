@@ -17,11 +17,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.hhn.mvs.auth.jwt;
+package de.hhn.mvs.security.jwt;
 
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.MACSigner;
+
+
 
 /**
  *  Creates a JWTSigner using a simple secret string
@@ -31,7 +33,7 @@ public class JWTCustomSigner {
 
     public JWTCustomSigner() {
         try {
-            this.signer = new MACSigner(JWTSecrets.DEFAULT_SECRET);
+            this.signer = new MACSigner(de.hhn.mvs.security.jwt.JWTSecrets.DEFAULT_SECRET);
         } catch (KeyLengthException e) {
             this.signer = null;
         }

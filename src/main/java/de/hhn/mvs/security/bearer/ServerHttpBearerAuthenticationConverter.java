@@ -17,12 +17,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.hhn.mvs.auth.bearer;
+package de.hhn.mvs.security.bearer;
 
 
-import de.hhn.mvs.auth.jwt.AuthorizationHeaderPayload;
-import de.hhn.mvs.auth.jwt.JWTCustomVerifier;
-import de.hhn.mvs.auth.jwt.UsernamePasswordAuthenticationBearer;
+import de.hhn.mvs.security.jwt.AuthorizationHeaderPayload;
+import de.hhn.mvs.security.jwt.JWTCustomVerifier;
+import de.hhn.mvs.security.jwt.UsernamePasswordAuthenticationBearer;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;

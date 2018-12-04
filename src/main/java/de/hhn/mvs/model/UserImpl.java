@@ -1,26 +1,33 @@
 package de.hhn.mvs.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Objects;
+import java.util.*;
 
 @Document
-public final class UserImpl implements User{
+public class UserImpl implements User{
+
     @Id
     private String id;
-    private boolean admin;
+
+    @Indexed(unique=true)
     private String email;
+
     private String password;
     private String token;
 
-    public UserImpl(){
+    private Set<String> authorities = new HashSet<>();
 
+
+    public UserImpl(){
     }
 
-    public UserImpl(String id, boolean admin, String email, String password, String token){
+    public UserImpl(String id, String email, String password, String token){
         this.id = id;
-        this.admin = admin;
         this.email = email;
         this.password = password;
         this.token = token;
@@ -29,11 +36,6 @@ public final class UserImpl implements User{
     @Override
     public String getId() {
         return id;
-    }
-
-    @Override
-    public boolean isAdmin() {
-        return admin;
     }
 
     @Override
@@ -67,10 +69,31 @@ public final class UserImpl implements User{
     }
 
     @Override
+    public Set<String> getRoles() {
+        return authorities;
+    }
+
+
+    @Override
+    public void setRoles(Set<String> roles) {
+        this.authorities.clear();
+        this.authorities.addAll(roles);
+    }
+
+    @Override
+    public void addRole(String role) {
+        this.authorities.add(role);
+    }
+
+    @Override
+    public void addRoles(Set<String> roles) {
+        this.authorities.addAll(roles);
+    }
+
+    @Override
     public String toString(){
         return "User{" +
                 "id='" + id + "\'" +
-                "admin='" + admin + "\'" +
                 "email='" + email + "\'" +
                 "password='" + password + "\'" +
                 "token='" + token + "\'" +
@@ -83,7 +106,6 @@ public final class UserImpl implements User{
         if (o == null || getClass() != o.getClass()) return false;
         UserImpl user = (UserImpl) o;
         return Objects.equals(id, user.id) &&
-                Objects.equals(admin, user.admin) &&
                 Objects.equals(email, user.email) &&
                 Objects.equals(password, user.password) &&
                 Objects.equals(token, user.token);
@@ -91,7 +113,41 @@ public final class UserImpl implements User{
 
     @Override
     public int hashCode(){
-        return Objects.hash(id, admin, email, password, token);
+        return Objects.hash(id, email, password, token);
     }
 
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<GrantedAuthority> tmp = new ArrayList<GrantedAuthority>();
+        for (String role : authorities) {
+            tmp.add(new SimpleGrantedAuthority(role));
+        }
+        return tmp;
+    }
+
+    @Override
+    public String getUsername() {
+        return getEmail();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

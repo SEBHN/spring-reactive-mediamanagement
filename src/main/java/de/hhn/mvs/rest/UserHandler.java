@@ -45,7 +45,7 @@ public class UserHandler {
                         fromPublisher(
                                 user.map(p ->
                                 {
-                                    UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
+                                    UserImpl createdUser = new UserImpl(id.toString(),
                                             p.getEmail(), p.getPassword(), p.getToken());
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -71,7 +71,7 @@ public class UserHandler {
                         .body(
                                 fromPublisher(
                                         user.map(p ->
-                                                new UserImpl(userId, p.isAdmin(),
+                                                new UserImpl(userId,
                                                         p.getEmail(), p.getPassword(),  p.getToken()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
