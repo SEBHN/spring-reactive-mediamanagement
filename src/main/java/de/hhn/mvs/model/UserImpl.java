@@ -1,8 +1,13 @@
 package de.hhn.mvs.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 @Document
@@ -47,6 +52,7 @@ public final class UserImpl implements User {
     }
 
     @Override
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
@@ -54,6 +60,19 @@ public final class UserImpl implements User {
     @Override
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @Override
+    @JsonProperty("password")
+    public void hashPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashInBytes = digest.digest(
+                password.getBytes(StandardCharsets.UTF_8));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashInBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        this.password = sb.toString();
     }
 
     @Override

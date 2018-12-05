@@ -2,6 +2,8 @@ package de.hhn.mvs.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.security.NoSuchAlgorithmException;
+
 @JsonDeserialize(as = UserImpl.class)
 public interface User {
 
@@ -20,5 +22,7 @@ public interface User {
     String getToken();
 
     void setToken(String token);
+
+    void hashPassword(String password) throws NoSuchAlgorithmException;
 
 }
