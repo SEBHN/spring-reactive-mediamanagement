@@ -112,25 +112,24 @@ public class MediaHandler {
     }
 
 
-    Mono<ServerResponse> listTaggedmedia(ServerRequest request) {
+    Mono<ServerResponse> listTaggedMedia(ServerRequest request) {
         String folderPath = request.pathVariable("folderPath");
-        String parsedfolderPath = parseFolderPathFormat(folderPath);
-        String preparedRegex = parsedfolderPath + "*";
+        String parsedFolderPath = parseFolderPathFormat(folderPath);
         String userId = request.pathVariable("userId");
 
         Flux<Tag> tagsFlux = request.bodyToFlux(Tag.class);
         Mono<List<Tag>> tagsMono = tagsFlux.collectList();
 
         Flux<Media> media = tagsMono.flatMapMany(tags -> {
-            if (tags.size() == 0)
-                return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath);
-            else
+            if (tags.isEmpty()) {
+                return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
+            } else {
+                String preparedRegex = "^" + parsedFolderPath;
                 return mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(userId, preparedRegex, tags);
-
+            }
         });
 
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
-
     }
 
 
