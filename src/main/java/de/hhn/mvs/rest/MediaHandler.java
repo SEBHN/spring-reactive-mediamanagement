@@ -16,10 +16,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
-import de.hhn.mvs.model.FolderElements;
-import de.hhn.mvs.model.Media;
-import de.hhn.mvs.model.MediaImpl;
-import de.hhn.mvs.model.Subfolder;
+import de.hhn.mvs.model.*;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
@@ -39,6 +36,7 @@ import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static de.hhn.mvs.rest.FolderUtils.SLASH;
@@ -69,16 +67,16 @@ public class MediaHandler {
         String mediaId = request.pathVariable("id");
         String userId = request.pathVariable("userId");
         return mediaRepo.findByIdAndOwnerId(mediaId, userId)
-                        .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
-                        .switchIfEmpty(notFound().build());
+                .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
+                .switchIfEmpty(notFound().build());
     }
 
     Mono<ServerResponse> list(ServerRequest request) {
         String userId = request.pathVariable("userId");
 
         return ok().contentType(MediaType.APPLICATION_JSON)
-                   .body(mediaRepo.findAllByOwnerId(userId), Media.class)
-                   .switchIfEmpty(notFound().build());
+                .body(mediaRepo.findAllByOwnerId(userId), Media.class)
+                .switchIfEmpty(notFound().build());
     }
 
     Mono<ServerResponse> listFolderContent(ServerRequest request) {
@@ -87,7 +85,7 @@ public class MediaHandler {
         String parsedfolderPath = parseFolderPathFormat(folderPath);
 
         Mono<List<Media>> monoMedias = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath)
-                                                .collectList();
+                .collectList();
         Mono<FolderElements> folderElementsMono =
                 monoMedias
                         .map(media -> {
@@ -110,29 +108,46 @@ public class MediaHandler {
                         });
         //TODO: error handling. e.g. Folder does not exist -> empty return
         return ok().contentType(MediaType.APPLICATION_JSON)
-                   .body(fromPublisher(folderElementsMono, FolderElements.class));
+                .body(fromPublisher(folderElementsMono, FolderElements.class));
     }
 
+
+    Mono<ServerResponse> listTaggedmedia(ServerRequest request) {
+        String folderPath = request.pathVariable("folderPath");
+        String parsedfolderPath = parseFolderPathFormat(folderPath);
+        String userId = request.pathVariable("userId");
+
+        Flux<Tag> tagsFlux = request.bodyToFlux(Tag.class);
+        Mono<List<Tag>> tagsMono = tagsFlux.collectList();//request.bodyToMono(List.class);
+
+        Flux<Media> media = tagsMono.flatMapMany(tags ->
+                    mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContaining(userId, parsedfolderPath, tags));
+
+        return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
+
+    }
+
+    
     Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
         UUID id = UUID.randomUUID();
         return ServerResponse.status(HttpStatus.CREATED)
-                             .contentType(MediaType.APPLICATION_JSON)
-                             .body(
-                                     fromPublisher(
-                                             media.map(p ->
-                                             {
-                                                 String userId = request.pathVariable("userId");
-                                                 MediaImpl createdMedia = new MediaImpl(id.toString(), p.getName(),
-                                                         p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
-                                                 createdMedia.validate();
-                                                 return createdMedia;
-                                             }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                                  .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                                  .flatMap(mediaRepo::save), Media.class)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        fromPublisher(
+                                media.map(p ->
+                                {
+                                    String userId = request.pathVariable("userId");
+                                    MediaImpl createdMedia = new MediaImpl(id.toString(), p.getName(),
+                                            p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
+                                    createdMedia.validate();
+                                    return createdMedia;
+                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .flatMap(mediaRepo::save), Media.class)
 
-                             )
-                             .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+                )
+                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     Mono<ServerResponse> download(ServerRequest request) {
@@ -158,38 +173,38 @@ public class MediaHandler {
         String fileKey = "file";
 
         return request.body(BodyExtractors.toMultipartData())
-                      .flatMap(parts -> {
+                .flatMap(parts -> {
 
-                          Map<String, Part> parameterFileMap = parts.toSingleValueMap();
-                          if (!parameterFileMap.containsKey(fileKey)) {
-                              return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
-                          }
+                    Map<String, Part> parameterFileMap = parts.toSingleValueMap();
+                    if (!parameterFileMap.containsKey(fileKey)) {
+                        return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
+                    }
 
-                          FilePart part = (FilePart) parameterFileMap.get(fileKey);
+                    FilePart part = (FilePart) parameterFileMap.get(fileKey);
 
-                          ObjectId fileId;
-                          try {
-                              Path upload = Files.createTempFile("mvs_", "_upload");
-                              part.transferTo(upload.toFile());
-                              fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
-                          } catch (IOException e) {
-                              return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
-                          }
+                    ObjectId fileId;
+                    try {
+                        Path upload = Files.createTempFile("mvs_", "_upload");
+                        part.transferTo(upload.toFile());
+                        fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
+                    } catch (IOException e) {
+                        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
+                    }
 
-                          String fileName = part.filename();
-                          String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
-                          String fileIdString = fileId.toString();
+                    String fileName = part.filename();
+                    String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+                    String fileIdString = fileId.toString();
 
-                          Mono<Media> media = mediaRepo.findByIdAndOwnerId(id, userId);
+                    Mono<Media> media = mediaRepo.findByIdAndOwnerId(id, userId);
 
-                          return ok()
-                                  .contentType(MediaType.APPLICATION_JSON)
-                                  .body(
-                                          fromPublisher(
-                                                  media.map(p -> new MediaImpl(p.getId(), fileName,
-                                                          fileIdString, fileExtension, p.getFilePath(), userId, p.getTags()))
-                                                       .flatMap(mediaRepo::save), Media.class));
-                      });
+                    return ok()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(
+                                    fromPublisher(
+                                            media.map(p -> new MediaImpl(p.getId(), fileName,
+                                                    fileIdString, fileExtension, p.getFilePath(), userId, p.getTags()))
+                                                    .flatMap(mediaRepo::save), Media.class));
+                });
     }
 
     Mono<ServerResponse> update(ServerRequest request) {
@@ -212,7 +227,7 @@ public class MediaHandler {
                                         media.map(p ->
                                                 new MediaImpl(id, p.getName(),
                                                         p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags()))
-                                             .flatMap(mediaRepo::save), Media.class)))
+                                                .flatMap(mediaRepo::save), Media.class)))
                 .switchIfEmpty(notFound().build());
     }
 
@@ -236,7 +251,7 @@ public class MediaHandler {
      */
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
-                                      .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+                .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     private GridFSBucket getGridFsBucket() {
