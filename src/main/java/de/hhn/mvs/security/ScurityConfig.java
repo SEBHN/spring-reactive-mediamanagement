@@ -4,6 +4,7 @@ import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.security.basic.BasicAuthenticationSuccessHandler;
 import de.hhn.mvs.security.bearer.BearerTokenReactiveAuthenticationManager;
 import de.hhn.mvs.security.bearer.ServerHttpBearerAuthenticationConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
@@ -12,10 +13,10 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
@@ -29,8 +30,13 @@ import java.util.function.Function;
 @EnableWebFluxSecurity
 public class ScurityConfig {
 
+    private UserCrudRepo users;
 
-    UserCrudRepo users;
+    @Autowired
+    public ScurityConfig(UserCrudRepo users) {
+        this.users = users;
+    }
+
     /**
      * A custom UserDetailsService to provide quick user rights for Spring Security,
      * more formal implementations may be added as separated files and annotated as
@@ -38,6 +44,8 @@ public class ScurityConfig {
      *
      * @return MapReactiveUserDetailsService an InMemory implementation of user details
      */
+
+    /** Static user for security -- commented for testing / debug
     @Bean
     public MapReactiveUserDetailsService userDetailsRepository() {
         UserDetails user = User.withDefaultPasswordEncoder()
@@ -46,6 +54,13 @@ public class ScurityConfig {
                 .roles("USER", "ADMIN")
                 .build();
         return new MapReactiveUserDetailsService(user);
+    }
+    */
+
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     /**
@@ -80,7 +95,7 @@ public class ScurityConfig {
     private Mono<AuthorizationDecision> currentUserMatchesPath(Mono<Authentication> authentication, AuthorizationContext context) {
         return authentication
                 .map(a -> context.getVariables().get("user").equals(a.getName()))
-                .map(granted -> new AuthorizationDecision(granted));
+                .map(AuthorizationDecision::new);//granted -> new AuthorizationDecision(granted)
     }
 
     @Bean
@@ -96,12 +111,14 @@ public class ScurityConfig {
      *
      * @return AuthenticationWebFilter
      */
+
     private AuthenticationWebFilter basicAuthenticationFilter(){
+
         UserDetailsRepositoryReactiveAuthenticationManager authManager;
         AuthenticationWebFilter basicAuthenticationFilter;
         ServerAuthenticationSuccessHandler successHandler;
 
-        authManager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsRepository());
+        authManager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService(users));
         successHandler = new BasicAuthenticationSuccessHandler();
 
         basicAuthenticationFilter = new AuthenticationWebFilter(authManager);
@@ -130,9 +147,12 @@ public class ScurityConfig {
         bearerConverter = new ServerHttpBearerAuthenticationConverter();
 
         bearerAuthenticationFilter.setAuthenticationConverter(bearerConverter);
-        bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/api/**"));
+        //TODO: mhh ? ServerWebExchangeMatchers.pathMatchers("/**")
+        bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/**"));
 
         return bearerAuthenticationFilter;
     }
+
+
 
 }
