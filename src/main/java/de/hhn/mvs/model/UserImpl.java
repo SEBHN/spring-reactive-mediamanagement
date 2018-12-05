@@ -11,7 +11,7 @@ public final class UserImpl implements User {
     private String id;
     private boolean admin;
     private String email;
-    private String hashedPassword;
+    private String password;
     private String token;
 
     public UserImpl() {
@@ -22,14 +22,8 @@ public final class UserImpl implements User {
         this.id = id;
         this.admin = admin;
         this.email = email;
-        this.hashedPassword = String.valueOf(password.hashCode());
+        this.password = password;
         this.token = token;
-    }
-
-    public User copy() {
-        User copiedUser = new UserImpl(this.id, this.admin, this.email, this.hashedPassword, token);
-        copiedUser.setHashedPassword(this.hashedPassword);
-        return copiedUser;
     }
 
     @Override
@@ -53,18 +47,13 @@ public final class UserImpl implements User {
     }
 
     @Override
-    public String getHashedPassword() {
-        return hashedPassword;
-    }
-
-    @Override
-    public void setHashedPassword(String password) {
-        this.hashedPassword = password;
+    public String getPassword() {
+        return password;
     }
 
     @Override
     public void setPassword(String password) {
-        this.hashedPassword = String.valueOf(password.hashCode());
+        this.password = password;
     }
 
     @Override
@@ -83,7 +72,7 @@ public final class UserImpl implements User {
                 "id='" + id + "\'" +
                 "admin='" + admin + "\'" +
                 "email='" + email + "\'" +
-                "password='" + hashedPassword + "\'" +
+                "password='" + password + "\'" +
                 "token='" + token + "\'" +
                 "}";
     }
@@ -96,13 +85,13 @@ public final class UserImpl implements User {
         return Objects.equals(id, user.id) &&
                 Objects.equals(admin, user.admin) &&
                 Objects.equals(email, user.email) &&
-                Objects.equals(hashedPassword, user.hashedPassword) &&
+                Objects.equals(password, user.password) &&
                 Objects.equals(token, user.token);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, admin, email, hashedPassword, token);
+        return Objects.hash(id, admin, email, password, token);
     }
 
 }

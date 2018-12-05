@@ -2,6 +2,7 @@ package de.hhn.mvs.rest;
 
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
+import de.hhn.mvs.model.UserImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,9 @@ public class UserHandler {
                         fromPublisher(
                                 user.map(p ->
                                 {
-                                    User createdUser = p.copy();
+                                    UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
+                                            p.getEmail(), p.getPassword(), p.getToken());
+
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -67,10 +70,12 @@ public class UserHandler {
                         .body(
                                 fromPublisher(
                                         user.map(p ->
-                                                p.copy())
+                                                new UserImpl(userId, p.isAdmin(),
+                                                        p.getEmail(), p.getPassword(),  p.getToken()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }
+
 
 
     Mono<ServerResponse> delete(ServerRequest request) {
@@ -85,9 +90,26 @@ public class UserHandler {
                 .switchIfEmpty(notFound().build());
     }
 
-    //Mono<ServerResponse> auth(ServerRequest request){
-    //    String userId = request.pathVariable("userId");
-    //}
+    Mono<ServerResponse> auth(ServerRequest request) {
+        Mono<User> user = request.bodyToMono(User.class);
+        UUID id = UUID.randomUUID();
+        return ServerResponse.status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        fromPublisher(
+                                user.map(p ->
+                                {
+                                    UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
+                                            p.getEmail(), p.getPassword(), p.getToken());
+
+                                    return createdUser;
+                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .flatMap(userRepo::save), User.class)
+
+                )
+                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
 
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)

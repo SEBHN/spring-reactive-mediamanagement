@@ -13,15 +13,12 @@ public interface User {
 
     void setEmail(String email);
 
-    String getHashedPassword();
+    String getPassword();
 
-    void setHashedPassword(String alreadyHashedPassword);
-
-    void setPassword(String passwordToHash);
+    void setPassword(String password);
 
     String getToken();
 
     void setToken(String token);
 
-    User copy();
 }

@@ -64,7 +64,7 @@ public class UserHandlerTest {
                     assertNotEquals(null, returnedUser);
                     assertEquals(testUser.getEmail(), returnedUser.getEmail());
                     assertEquals(testUser.isAdmin(), returnedUser.isAdmin());
-                    assertEquals(testUser.getHashedPassword(), returnedUser.getHashedPassword());
+                    assertEquals(testUser.getPassword(), returnedUser.getPassword());
                     assertEquals(testUser.getToken(), returnedUser.getToken());
                 });
     }
@@ -101,7 +101,7 @@ public class UserHandlerTest {
                     assertEquals(testUser2.getId(), returnedUser.getId());
                     assertEquals(testUser2.isAdmin(), returnedUser.isAdmin());
                     assertEquals(testUser2.getEmail(), returnedUser.getEmail());
-                    assertEquals(testUser2.getHashedPassword(), returnedUser.getHashedPassword());
+                    assertEquals(testUser2.getPassword(), returnedUser.getPassword());
                     assertEquals(testUser2.getToken(), returnedUser.getToken());
                 });
     }
