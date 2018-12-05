@@ -32,6 +32,7 @@ import reactor.core.publisher.Mono;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -338,6 +339,16 @@ public class MediaHandlerTest {
         webClient.delete().uri("/users/{userId}/media/{id}", ANY_OTHER_USER_ID, mediaId)
                  .exchange()
                  .expectStatus().isNotFound();
+    }
+
+    @Test
+    public void getMediaWithTagsFromSubfolder(){
+        //TODO
+//        webClient.post()
+//                .uri("/users/{userId}/folders/{folderPath}/", ANY_USER_ID, "/")
+//                .body(new ArrayList<Tag>(new Tag("a")))
+//                ;
+        fail();
     }
 
 

@@ -121,10 +121,15 @@ public class MediaHandler {
         Flux<Tag> tagsFlux = request.bodyToFlux(Tag.class);
         Mono<List<Tag>> tagsMono = tagsFlux.collectList();//request.bodyToMono(List.class);
 
-        Flux<Media> media = tagsMono.flatMapMany(tags ->
-                    mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(userId, preparedRegex, tags));
+        Flux<Media> media = tagsMono.flatMapMany(tags -> {
+            if (tags.size() == 0)
+                return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath);
+            else
+                return mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(userId, preparedRegex, tags);
 
+        });
 
+        //TODO no response for no tags
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
 
     }

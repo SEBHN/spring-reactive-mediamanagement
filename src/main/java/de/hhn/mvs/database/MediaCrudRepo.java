@@ -20,12 +20,6 @@ public interface MediaCrudRepo extends ReactiveMongoRepository<Media, String> {
 
     Flux<Media> findAllByOwnerId(String ownerId);
 
-    Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTagsContaining(String ownerId, String filePath, List<Tag> tags);
-
-    Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTags(String ownerId, String filePath, List<Tag> tags);
-
-    Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTagsContains(String ownerId, String filePath, List<Tag> tags);
-
     @Query("{ 'ownerId': ?0, filePath: {$regex: ?1}, tags: { $all : ?2}}")
     Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(String ownerId, String regex, List<Tag> tags);
 }
