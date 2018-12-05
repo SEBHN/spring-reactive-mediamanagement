@@ -99,26 +99,26 @@ public class MediaHandlerTest {
     public void getExisting() {
         catMediaSave.block(); // ensure is saved to db
         webClient.get().uri("/users/{userId}/media/{id}", ANY_USER_ID, catMedia.getId()).accept(MediaType.APPLICATION_JSON)
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                 .expectBody(Media.class)
-                 .isEqualTo(catMedia);
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody(Media.class)
+                .isEqualTo(catMedia);
     }
 
     @Test
     public void getNotExisting() {
         webClient.get().uri("/users/{userId}/media/{id}", ANY_USER_ID, 1234567890).accept(MediaType.APPLICATION_JSON)
-                 .exchange()
-                 .expectStatus().isNotFound();
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
     public void getExistingFromAnotherUser() {
         anotherDogMediaSave.block();
         webClient.get().uri("/users/{userId}/media/{id}", ANY_USER_ID, anotherDog.getId()).accept(MediaType.APPLICATION_JSON)
-                 .exchange()
-                 .expectStatus().isNotFound();
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -126,13 +126,13 @@ public class MediaHandlerTest {
         savedMedia.forEach(Mono::block); // ensure every media is saved
 
         webClient.get().uri("/users/{userId}/media", ANY_USER_ID).accept(MediaType.APPLICATION_JSON)
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                 .expectBodyList(Media.class)
-                 .hasSize(5)
-                 .contains(catMedia, dogMedia, cat2MediaInFolder, cat3MediaInFolder, kittenMediaInFolder)
-                 .doesNotContain(anotherDog);
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(Media.class)
+                .hasSize(5)
+                .contains(catMedia, dogMedia, cat2MediaInFolder, cat3MediaInFolder, kittenMediaInFolder)
+                .doesNotContain(anotherDog);
     }
 
     @Test
@@ -147,24 +147,24 @@ public class MediaHandlerTest {
         String folder = "/";
 
         webClient.get().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, folder)
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                 .expectBody(FolderElements.class)
-                 .consumeWith(folderElements -> {
-                     List<Subfolder> subFolders = folderElements.getResponseBody().getSubfolders();
-                     List<Media> media = folderElements.getResponseBody().getMedia();
-                     assertEquals("Should have only 2 SubFolders", 2, subFolders.size());
-                     assertEquals("'/' contains only 2 media", 2, media.size());
-                     assertEquals(true, media.contains(catMedia));
-                     assertEquals(true, media.contains(dogMedia));
-                     assertEquals(false, media.contains(anotherDog));
-                     assertEquals(false, media.contains(cat2MediaInFolder));
-                     assertEquals(false, media.contains(cat3MediaInFolder));
-                     assertEquals(false, media.contains(kittenMediaInFolder));
-                     assertEquals(true, subFolders.contains(new Subfolder("catPictures")));
-                     assertEquals(true, subFolders.contains(new Subfolder("kitten")));
-                 });
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody(FolderElements.class)
+                .consumeWith(folderElements -> {
+                    List<Subfolder> subFolders = folderElements.getResponseBody().getSubfolders();
+                    List<Media> media = folderElements.getResponseBody().getMedia();
+                    assertEquals("Should have only 2 SubFolders", 2, subFolders.size());
+                    assertEquals("'/' contains only 2 media", 2, media.size());
+                    assertEquals(true, media.contains(catMedia));
+                    assertEquals(true, media.contains(dogMedia));
+                    assertEquals(false, media.contains(anotherDog));
+                    assertEquals(false, media.contains(cat2MediaInFolder));
+                    assertEquals(false, media.contains(cat3MediaInFolder));
+                    assertEquals(false, media.contains(kittenMediaInFolder));
+                    assertEquals(true, subFolders.contains(new Subfolder("catPictures")));
+                    assertEquals(true, subFolders.contains(new Subfolder("kitten")));
+                });
     }
 
     @Test
@@ -177,55 +177,55 @@ public class MediaHandlerTest {
         String folder = "/catPictures";
 
         webClient.get().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, folder)
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                 .expectBody(FolderElements.class)
-                 .consumeWith(folderElements -> {
-                     List<Subfolder> subFolders = folderElements.getResponseBody().getSubfolders();
-                     List<Media> media = folderElements.getResponseBody().getMedia();
-                     assertEquals(0, subFolders.size());
-                     assertEquals(2, media.size());
-                     assertEquals(true, media.contains(cat2MediaInFolder));
-                     assertEquals(true, media.contains(cat3MediaInFolder));
-                 });
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody(FolderElements.class)
+                .consumeWith(folderElements -> {
+                    List<Subfolder> subFolders = folderElements.getResponseBody().getSubfolders();
+                    List<Media> media = folderElements.getResponseBody().getMedia();
+                    assertEquals(0, subFolders.size());
+                    assertEquals(2, media.size());
+                    assertEquals(true, media.contains(cat2MediaInFolder));
+                    assertEquals(true, media.contains(cat3MediaInFolder));
+                });
     }
 
     @Test
     public void postValidMedia() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
-                 .contentType(MediaType.APPLICATION_JSON)
-                 .body(BodyInserters.fromObject(catMedia))
-                 .exchange()
-                 .expectStatus().isCreated()
-                 .expectBody(Media.class)
-                 .consumeWith(returnedMediaResult -> {
-                     Media returnedMedia = returnedMediaResult.getResponseBody();
-                     assertNotEquals(null, returnedMedia);
-                     assertEquals(catMedia.getName(), returnedMedia.getName());
-                     assertEquals(catMedia.getTags(), returnedMedia.getTags());
-                     assertEquals(catMedia.getFileExtension(), returnedMedia.getFileExtension());
-                     assertEquals(catMedia.getFilePath(), returnedMedia.getFilePath());
-                     assertEquals(ANY_USER_ID, returnedMedia.getOwnerId());
-                 });
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(catMedia))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Media.class)
+                .consumeWith(returnedMediaResult -> {
+                    Media returnedMedia = returnedMediaResult.getResponseBody();
+                    assertNotEquals(null, returnedMedia);
+                    assertEquals(catMedia.getName(), returnedMedia.getName());
+                    assertEquals(catMedia.getTags(), returnedMedia.getTags());
+                    assertEquals(catMedia.getFileExtension(), returnedMedia.getFileExtension());
+                    assertEquals(catMedia.getFilePath(), returnedMedia.getFilePath());
+                    assertEquals(ANY_USER_ID, returnedMedia.getOwnerId());
+                });
     }
 
     @Test
     public void postInvalidMedia_WithString() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
-                 .contentType(MediaType.APPLICATION_JSON)
-                 .body(BodyInserters.fromObject("hi:|"))
-                 .exchange()
-                 .expectStatus().is4xxClientError();
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject("hi:|"))
+                .exchange()
+                .expectStatus().is4xxClientError();
     }
 
     @Test
     public void postInvalidMedia() {
         webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
-                 .contentType(MediaType.APPLICATION_JSON)
-                 .body(BodyInserters.fromObject(new MediaImpl(null, null, null, null, null, null)))
-                 .exchange()
-                 .expectStatus().is4xxClientError();
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(new MediaImpl(null, null, null, null, null, null)))
+                .exchange()
+                .expectStatus().is4xxClientError();
     }
 
     @Test
@@ -237,18 +237,18 @@ public class MediaHandlerTest {
         assertNotEquals(null, mediaId);
 
         webClient.post()
-                 .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
-                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                 .body(BodyInserters.fromMultipartData(multipartDataMap))
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectBody(Media.class)
-                 .consumeWith(postedMediaResult -> {
-                     Media returnedMedia = postedMediaResult.getResponseBody();
-                     assertNotEquals(null, returnedMedia);
-                     assertEquals(resource.getFilename(), returnedMedia.getName());
-                     assertNotEquals("", returnedMedia.getFileId());
-                 });
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Media.class)
+                .consumeWith(postedMediaResult -> {
+                    Media returnedMedia = postedMediaResult.getResponseBody();
+                    assertNotEquals(null, returnedMedia);
+                    assertEquals(resource.getFilename(), returnedMedia.getName());
+                    assertNotEquals("", returnedMedia.getFileId());
+                });
     }
 
     @Test
@@ -260,11 +260,11 @@ public class MediaHandlerTest {
         assertNotEquals(null, mediaId);
 
         webClient.post()
-                 .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
-                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                 .body(BodyInserters.fromMultipartData(multipartDataMap))
-                 .exchange()
-                 .expectStatus().isBadRequest();
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isBadRequest();
 
         multipartDataMap.clear();
     }
@@ -276,11 +276,11 @@ public class MediaHandlerTest {
         assertNotEquals(null, mediaId);
 
         webClient.post()
-                 .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
-                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                 .body(BodyInserters.fromMultipartData(multipartDataMap))
-                 .exchange()
-                 .expectStatus().isBadRequest();
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test
@@ -293,20 +293,20 @@ public class MediaHandlerTest {
         dogMedia.setFilePath("/dog/newDogPath/");
 
         webClient.put().uri("/users/{userId}/media/{id}", ANY_USER_ID, mediaId)
-                 .contentType(MediaType.APPLICATION_JSON)
-                 .body(BodyInserters.fromObject(dogMedia))
-                 .exchange()
-                 .expectStatus().isOk()
-                 .expectBody(Media.class)
-                 .consumeWith(returnedMediaResult -> {
-                     Media returnedMedia = returnedMediaResult.getResponseBody();
-                     assertNotEquals(null, returnedMedia);
-                     assertEquals(dogMedia.getId(), returnedMedia.getId());
-                     assertEquals(dogMedia.getName(), returnedMedia.getName());
-                     assertEquals(dogMedia.getTags(), returnedMedia.getTags());
-                     assertEquals(dogMedia.getFileExtension(), returnedMedia.getFileExtension());
-                     assertEquals(dogMedia.getFilePath(), returnedMedia.getFilePath());
-                 });
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(dogMedia))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Media.class)
+                .consumeWith(returnedMediaResult -> {
+                    Media returnedMedia = returnedMediaResult.getResponseBody();
+                    assertNotEquals(null, returnedMedia);
+                    assertEquals(dogMedia.getId(), returnedMedia.getId());
+                    assertEquals(dogMedia.getName(), returnedMedia.getName());
+                    assertEquals(dogMedia.getTags(), returnedMedia.getTags());
+                    assertEquals(dogMedia.getFileExtension(), returnedMedia.getFileExtension());
+                    assertEquals(dogMedia.getFilePath(), returnedMedia.getFilePath());
+                });
     }
 
     @Test
@@ -322,50 +322,94 @@ public class MediaHandlerTest {
     public void deleteValidMedia() {
         String mediaId = createMedia(dogMedia).getResponseBody().getId();
         webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, mediaId)
-                 .exchange()
-                 .expectStatus().isNoContent();
+                .exchange()
+                .expectStatus().isNoContent();
     }
 
     @Test
     public void deleteNonExistingMedia() {
         webClient.delete().uri("/users/{userId}/media/{id}", ANY_USER_ID, NOT_EXISTING_MEDIA_ID)
-                 .exchange()
-                 .expectStatus().isNotFound();
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
     public void deleteValidMediaFromOtherUser() {
         String mediaId = createMedia(dogMedia).getResponseBody().getId();
         webClient.delete().uri("/users/{userId}/media/{id}", ANY_OTHER_USER_ID, mediaId)
-                 .exchange()
-                 .expectStatus().isNotFound();
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
-    public void getMediaWithTagsFromSubfolder(){
-        //TODO
-//        webClient.post()
-//                .uri("/users/{userId}/folders/{folderPath}/", ANY_USER_ID, "/")
-//                .body(new ArrayList<Tag>(new Tag("a")))
-//                ;
-        fail();
+    public void getMediaWithTagsFromSubfolder() {
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        Media dog = dogMediaSave.block();
+        Tag cute = new Tag("cute");
+        Tag cats = new Tag("cats");
+        Tag doge = new Tag("doge");
+        Tag meme = new Tag("meme");
+
+        ArrayList<Tag> catstags = new ArrayList<>(Arrays.asList(cats, cute));
+
+        //multiple tags
+        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
+                .body(BodyInserters.fromObject(catstags))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(1)
+                .contains(cat)
+                .doesNotContain(cat2InFolder, cat3InFolder, kitten, dog);
+
+        //1 tag, multiple appearance
+        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
+                .body(BodyInserters.fromObject(new ArrayList(Arrays.asList(cute))))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(3)
+                .contains(cat, cat2InFolder, kitten)
+                .doesNotContain(cat3InFolder, dog);
+
+        //1 tag, search only in folder
+        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/catPictures")
+                .body(BodyInserters.fromObject(new ArrayList(Arrays.asList(cute))))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(1)
+                .contains(cat2InFolder)
+                .doesNotContain(cat, kitten, cat3InFolder, dog);
+
+        //not existing tag
+        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
+                .body(BodyInserters.fromObject(new ArrayList(Arrays.asList(new Tag("notexisting")))))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(0);
+
     }
 
 
     private EntityExchangeResult<Media> createMedia(Media media) {
         return webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(BodyInserters.fromObject(media))
-                        .exchange()
-                        .expectStatus().isCreated()
-                        .expectBody(Media.class).returnResult();
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromObject(media))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(Media.class).returnResult();
     }
 
     private EntityExchangeResult<Media> getMedia(String mediaId) {
         return webClient.get().uri("/users/{userId}/media/{id}/", ANY_USER_ID, mediaId)
-                        .exchange()
-                        .expectStatus().isOk()
-                        .expectBody(Media.class).returnResult();
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Media.class).returnResult();
     }
 
     private FileSystemResource loadFileFromResource() throws Exception {

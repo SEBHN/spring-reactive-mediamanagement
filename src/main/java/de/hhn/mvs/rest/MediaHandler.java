@@ -119,7 +119,7 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
 
         Flux<Tag> tagsFlux = request.bodyToFlux(Tag.class);
-        Mono<List<Tag>> tagsMono = tagsFlux.collectList();//request.bodyToMono(List.class);
+        Mono<List<Tag>> tagsMono = tagsFlux.collectList();
 
         Flux<Media> media = tagsMono.flatMapMany(tags -> {
             if (tags.size() == 0)
@@ -129,7 +129,6 @@ public class MediaHandler {
 
         });
 
-        //TODO no response for no tags
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
 
     }
