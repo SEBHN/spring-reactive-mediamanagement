@@ -36,4 +36,8 @@ public interface Media {
 
     boolean removeTag(Tag tag);
 
+    void setOwnerId(String userId);
+
+    String getOwnerId();
+
 }

@@ -8,6 +8,10 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface MediaCrudRepo extends ReactiveMongoRepository<Media, String> {
-    Mono<Media> save(Media media);
-    Flux<Media> findAll();
+
+    Flux<Media> findAllByOwnerIdAndFilePathIsStartingWith(String userId, String filePath);
+
+    Mono<Media> findByIdAndOwnerId(String id, String ownerId);
+
+    Flux<Media> findAllByOwnerId(String ownerId);
 }
