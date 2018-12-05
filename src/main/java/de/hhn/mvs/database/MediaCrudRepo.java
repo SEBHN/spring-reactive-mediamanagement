@@ -2,7 +2,9 @@ package de.hhn.mvs.database;
 
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.Tag;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,4 +21,11 @@ public interface MediaCrudRepo extends ReactiveMongoRepository<Media, String> {
     Flux<Media> findAllByOwnerId(String ownerId);
 
     Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTagsContaining(String ownerId, String filePath, List<Tag> tags);
+
+    Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTags(String ownerId, String filePath, List<Tag> tags);
+
+    Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTagsContains(String ownerId, String filePath, List<Tag> tags);
+
+    @Query("{ 'ownerId': ?0, filePath: {$regex: ?1}, tags: { $all : ?2}}")
+    Flux<Media> findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(@Param("owner") String ownerId, @Param("filePath") String filePath, @Param("tags") List<Tag> tags);
 }

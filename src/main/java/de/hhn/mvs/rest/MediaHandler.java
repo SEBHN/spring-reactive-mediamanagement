@@ -121,13 +121,15 @@ public class MediaHandler {
         Mono<List<Tag>> tagsMono = tagsFlux.collectList();//request.bodyToMono(List.class);
 
         Flux<Media> media = tagsMono.flatMapMany(tags ->
-                    mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContaining(userId, parsedfolderPath, tags));
+                    //mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContaining(userId, parsedfolderPath, tags));
+                    mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(userId, parsedfolderPath + "*", tags));
+
 
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
 
     }
 
-    
+
     Mono<ServerResponse> create(ServerRequest request) {
         Mono<Media> media = request.bodyToMono(Media.class);
         UUID id = UUID.randomUUID();
