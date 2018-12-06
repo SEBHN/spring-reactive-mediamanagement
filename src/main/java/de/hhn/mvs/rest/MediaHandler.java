@@ -1,16 +1,5 @@
 package de.hhn.mvs.rest;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
@@ -20,7 +9,6 @@ import de.hhn.mvs.model.FolderElements;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Subfolder;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.Resource;
@@ -41,14 +29,17 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+
 import static de.hhn.mvs.rest.FolderUtils.SLASH;
 import static de.hhn.mvs.rest.FolderUtils.parseFolderPathFormat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class MediaHandler {
@@ -158,38 +149,38 @@ public class MediaHandler {
         String fileKey = "file";
 
         return request.body(BodyExtractors.toMultipartData())
-                      .flatMap(parts -> {
+                .flatMap(parts -> {
+                    Map<String, Part> parameterFileMap = parts.toSingleValueMap();
+                    if (!parameterFileMap.containsKey(fileKey)) {
+                        return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
+                    }
+                    return handleUpload(id, userId, (FilePart) parameterFileMap.get(fileKey));
+                });
+    }
 
-                          Map<String, Part> parameterFileMap = parts.toSingleValueMap();
-                          if (!parameterFileMap.containsKey(fileKey)) {
-                              return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
-                          }
+    private Mono<? extends ServerResponse> handleUpload(String id, String userId, FilePart part) {
+        try {
+            Path upload = Files.createTempFile("mvs_", "_upload");
+            part.transferTo(upload.toFile());
+            String fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename()).toString();
+            String fileName = part.filename();
+            String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
 
-                          FilePart part = (FilePart) parameterFileMap.get(fileKey);
+            Mono<Media> existingMediaMono = mediaRepo.findByIdAndOwnerId(id, userId);
 
-                          ObjectId fileId;
-                          try {
-                              Path upload = Files.createTempFile("mvs_", "_upload");
-                              part.transferTo(upload.toFile());
-                              fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
-                          } catch (IOException e) {
-                              return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
-                          }
-
-                          String fileName = part.filename();
-                          String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
-                          String fileIdString = fileId.toString();
-
-                          Mono<Media> media = mediaRepo.findByIdAndOwnerId(id, userId);
-
-                          return ok()
-                                  .contentType(MediaType.APPLICATION_JSON)
-                                  .body(
-                                          fromPublisher(
-                                                  media.map(p -> new MediaImpl(p.getId(), fileName,
-                                                          fileIdString, fileExtension, p.getFilePath(), userId, p.getTags()))
-                                                       .flatMap(mediaRepo::save), Media.class));
-                      });
+            return ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(fromPublisher(
+                            existingMediaMono.map(existingMedia -> {
+                                existingMedia.setName(fileName);
+                                existingMedia.setFileId(fileId);
+                                existingMedia.setFileExtension(fileExtension);
+                                return existingMedia;
+                            }).flatMap(mediaRepo::save), Media.class))
+                    .switchIfEmpty(notFound().build());
+        } catch (IOException e) {
+            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
+        }
     }
 
     Mono<ServerResponse> update(ServerRequest request) {
