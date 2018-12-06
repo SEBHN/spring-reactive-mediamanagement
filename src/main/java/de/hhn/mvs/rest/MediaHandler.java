@@ -75,8 +75,7 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
 
         return ok().contentType(MediaType.APPLICATION_JSON)
-                .body(mediaRepo.findAllByOwnerId(userId), Media.class)
-                .switchIfEmpty(notFound().build());
+                .body(mediaRepo.findAllByOwnerId(userId), Media.class);
     }
 
     Mono<ServerResponse> listFolderContent(ServerRequest request) {
@@ -117,15 +116,15 @@ public class MediaHandler {
         String parsedFolderPath = parseFolderPathFormat(folderPath);
         String userId = request.pathVariable("userId");
 
-        Flux<Tag> tagsFlux = request.bodyToFlux(Tag.class);
-        Mono<List<Tag>> tagsMono = tagsFlux.collectList();
+        Mono<List<Tag>> tagsMono = request.bodyToFlux(Tag.class).collectList();
+
 
         Flux<Media> media = tagsMono.flatMapMany(tags -> {
             if (tags.isEmpty()) {
                 return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
             } else {
                 String preparedRegex = "^" + parsedFolderPath;
-                return mediaRepo.findAllByOwnerIdAndFilePathStartingWithAndTagsContainingAll(userId, preparedRegex, tags);
+                return mediaRepo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(userId, preparedRegex, tags);
             }
         });
 
