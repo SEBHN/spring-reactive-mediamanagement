@@ -63,15 +63,19 @@ public class MediaHandlerTest {
     private Mono<Media> kittenMediaInFolderMediaSave;
     private Mono<Media> dogMediaSave;
     private Mono<Media> anotherDogMediaSave;
+    Tag cats;
+    Tag doge;
+    Tag cute;
+    Tag meme;
 
     private List<Mono<Media>> savedMedia;
 
     @Before
     public void setUp() {
-        Tag cats = new Tag("cats");
-        Tag doge = new Tag("doge");
-        Tag cute = new Tag("cute");
-        Tag meme = new Tag("meme");
+        cats = new Tag("cats");
+        doge = new Tag("doge");
+        cute = new Tag("cute");
+        meme = new Tag("meme");
 
         catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "123462345", ".jpg", "/", ANY_USER_ID, cats, cute);
         cat2MediaInFolder = new MediaImpl(UUID.randomUUID().toString(), "Cute cate", "123", ".png", "/catPictures/", ANY_USER_ID, cute);
@@ -342,28 +346,33 @@ public class MediaHandlerTest {
     }
 
     @Test
-    public void getMediaWithTagsFromSubfolder() {
+    public void getMediaWithMultipleTwoTagsFromRoot() {
         Media cat = catMediaSave.block();
         Media cat2InFolder = cat2MediaInFolderMediaSave.block();
         Media cat3InFolder = cat3MediaInFolderMediaSave.block();
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
-        Tag cute = new Tag("cute");
-        Tag cats = new Tag("cats");
-        Tag doge = new Tag("doge");
-        Tag meme = new Tag("meme");
-
-        ArrayList<Tag> catstags = new ArrayList<>(Arrays.asList(cats, cute));
 
         //multiple tags
         webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
-                .body(BodyInserters.fromObject(catstags))
+                .body(BodyInserters.fromObject(new ArrayList<>(Arrays.asList(cats, cute))))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
                 .hasSize(1)
                 .contains(cat)
                 .doesNotContain(cat2InFolder, cat3InFolder, kitten, dog);
+
+    }
+
+
+    @Test
+    public void getMediaWithOneTagTwoFromRoot() {
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        Media dog = dogMediaSave.block();
 
         //1 tag, multiple appearance
         webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
@@ -374,6 +383,17 @@ public class MediaHandlerTest {
                 .hasSize(3)
                 .contains(cat, cat2InFolder, kitten)
                 .doesNotContain(cat3InFolder, dog);
+    }
+
+
+
+    @Test
+    public void getMediaWithOneTagFromSubfolder() {
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        Media dog = dogMediaSave.block();
 
         //1 tag, search only in folder
         webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/catPictures")
@@ -384,6 +404,17 @@ public class MediaHandlerTest {
                 .hasSize(1)
                 .contains(cat2InFolder)
                 .doesNotContain(cat, kitten, cat3InFolder, dog);
+
+    }
+
+
+    @Test
+    public void getMediaWithNoTagsFromTagFilterMethod() {
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        Media dog = dogMediaSave.block();
 
         //not existing tag
         webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
