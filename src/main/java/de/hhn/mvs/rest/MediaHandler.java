@@ -1,5 +1,6 @@
 package de.hhn.mvs.rest;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,12 +12,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.*;
+import javafx.beans.binding.StringBinding;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
@@ -31,6 +36,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -44,9 +50,7 @@ import static de.hhn.mvs.rest.FolderUtils.parseFolderPathFormat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class MediaHandler {
@@ -110,24 +114,32 @@ public class MediaHandler {
                 .body(fromPublisher(folderElementsMono, FolderElements.class));
     }
 
-
     Mono<ServerResponse> listTaggedMedia(ServerRequest request) {
+
         String folderPath = request.pathVariable("folderPath");
         String parsedFolderPath = parseFolderPathFormat(folderPath);
         String userId = request.pathVariable("userId");
+        List<Tag> tagList = new ArrayList<>();
+        List<String> tags  = request.queryParams().get("tag");
 
-        Mono<List<Tag>> tagsMono = request.bodyToFlux(Tag.class).collectList();
-
-
-        Flux<Media> media = tagsMono.flatMapMany(tags -> {
-            if (tags.isEmpty()) {
-                return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
-            } else {
-                String preparedRegex = "^" + parsedFolderPath;
-                return mediaRepo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(userId, preparedRegex, tags);
+        for(String val: tags){
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectReader reader = mapper.reader().forType(Tag.class);
+            try {
+                Tag tag = reader.readValue(val);
+                tagList.add(tag);
+            } catch (IOException e) {
+                return badRequest().build();
             }
-        });
+        }
 
+        Flux<Media> media;
+        if (tagList.isEmpty())
+            media = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
+        else {
+            String preparedRegex = "^" + parsedFolderPath;
+            media = mediaRepo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(userId, preparedRegex, tagList);
+        }
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }
 
