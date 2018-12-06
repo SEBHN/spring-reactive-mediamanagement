@@ -52,7 +52,6 @@ public final class UserImpl implements User {
     }
 
     @Override
-    @JsonIgnore
     public String getPassword() {
         return password;
     }
@@ -63,11 +62,16 @@ public final class UserImpl implements User {
     }
 
     @Override
-    @JsonProperty("password")
-    public void hashPassword(String password) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    @JsonProperty
+    public void hashPassword() {
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         byte[] hashInBytes = digest.digest(
-                password.getBytes(StandardCharsets.UTF_8));
+                this.password.getBytes(StandardCharsets.UTF_8));
         StringBuilder sb = new StringBuilder();
         for (byte b : hashInBytes) {
             sb.append(String.format("%02x", b));

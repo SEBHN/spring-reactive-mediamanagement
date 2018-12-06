@@ -23,6 +23,6 @@ public interface User {
 
     void setToken(String token);
 
-    void hashPassword(String password) throws NoSuchAlgorithmException;
+    void hashPassword();
 
 }

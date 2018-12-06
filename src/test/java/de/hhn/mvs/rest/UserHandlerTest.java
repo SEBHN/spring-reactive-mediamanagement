@@ -39,7 +39,7 @@ public class UserHandlerTest {
     private String passwordU2 = "testPassword987";
 
     @Before
-    public void setUp() {
+    public void setUp(){
         testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", passwordU1, "Token123");
         testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", passwordU2, "Token987");
 
@@ -64,6 +64,7 @@ public class UserHandlerTest {
                     assertNotEquals(null, returnedUser);
                     assertEquals(testUser.getEmail(), returnedUser.getEmail());
                     assertEquals(testUser.isAdmin(), returnedUser.isAdmin());
+                    testUser.hashPassword();
                     assertEquals(testUser.getPassword(), returnedUser.getPassword());
                     assertEquals(testUser.getToken(), returnedUser.getToken());
                 });

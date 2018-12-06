@@ -45,7 +45,7 @@ public class UserHandler {
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
                                             p.getEmail(), p.getPassword(), p.getToken());
-
+                                    createdUser.hashPassword();
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -92,23 +92,22 @@ public class UserHandler {
 
     Mono<ServerResponse> auth(ServerRequest request) {
         Mono<User> user = request.bodyToMono(User.class);
-        UUID id = UUID.randomUUID();
+        Mono<String> tokenMono = user.flatMap(p ->
+        {
+            Mono<String> stringMono = userRepo.findByEmail(p.getEmail())
+                    .map(dbUser -> {
+                        p.hashPassword();
+                        if (p.getPassword().equals(dbUser.getPassword())) {
+                            return "I am authenticated";
+                        }
+                        return "";
+                    });
+            return stringMono;
+        });
         return ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(
-                        fromPublisher(
-                                user.map(p ->
-                                {
-                                    UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
-                                            p.getEmail(), p.getPassword(), p.getToken());
-
-                                    return createdUser;
-                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .flatMap(userRepo::save), User.class)
-
-                )
-                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+                .body(fromPublisher(tokenMono, String.class))
+                .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
