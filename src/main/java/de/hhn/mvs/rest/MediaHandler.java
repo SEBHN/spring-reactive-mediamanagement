@@ -1,7 +1,5 @@
 package de.hhn.mvs.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
@@ -106,14 +104,13 @@ public class MediaHandler {
     }
 
     Mono<ServerResponse> listTaggedMedia(ServerRequest request) {
-
         String folderPath = request.pathVariable("folderPath");
         String parsedFolderPath = parseFolderPathFormat(folderPath);
         String userId = request.pathVariable("userId");
         List<Tag> tagList = new ArrayList<>();
+        MultiValueMap<String, String> params = request.queryParams();
 
-
-        request.queryParams().forEach((name, values) -> {
+        params.forEach((name, values) -> {
             if (name.equals("tag")) {
                 for (String value : values) {
                     tagList.add(new Tag(value));
@@ -128,7 +125,6 @@ public class MediaHandler {
             String preparedRegex = "^" + parsedFolderPath;
             media = mediaRepo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(userId, preparedRegex, tagList);
         }
-
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }
 

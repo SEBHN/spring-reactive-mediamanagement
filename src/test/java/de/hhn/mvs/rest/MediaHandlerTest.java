@@ -1,16 +1,7 @@
 package de.hhn.mvs.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
 import de.hhn.mvs.database.MediaCrudRepo;
-import de.hhn.mvs.model.FolderElements;
-import de.hhn.mvs.model.Media;
-import de.hhn.mvs.model.MediaImpl;
-import de.hhn.mvs.model.Subfolder;
-import de.hhn.mvs.model.Tag;
+import de.hhn.mvs.model.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,9 +21,13 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -346,16 +341,19 @@ public class MediaHandlerTest {
     }
 
     @Test
-    public void getMediaWithMultipleTwoTagsFromRoot() {
+    public void getMediaWithMultipleTagsFromRoot() {
         Media cat = catMediaSave.block();
         Media cat2InFolder = cat2MediaInFolderMediaSave.block();
         Media cat3InFolder = cat3MediaInFolderMediaSave.block();
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
+        String folder = "/";
+
         //multiple tags
-        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
-                .body(BodyInserters.fromObject(new ArrayList<>(Arrays.asList(cats, cute))))
+        webClient.get()
+                .uri("/users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}&tag={tag2}"
+                        , ANY_USER_ID, folder, cats.getName(), cute.getName())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
@@ -367,24 +365,25 @@ public class MediaHandlerTest {
 
 
     @Test
-    public void getMediaWithOneTagTwoFromRoot() {
+    public void getMediaWithOneTagFromRoot() {
         Media cat = catMediaSave.block();
         Media cat2InFolder = cat2MediaInFolderMediaSave.block();
         Media cat3InFolder = cat3MediaInFolderMediaSave.block();
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        //1 tag, multiple appearance
-        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
-                .body(BodyInserters.fromObject(new ArrayList(Arrays.asList(cute))))
+        String folder = "/";//.replace("/", "%2F");
+
+        webClient.get().uri("users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", cute.getName())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
                 .hasSize(3)
                 .contains(cat, cat2InFolder, kitten)
                 .doesNotContain(cat3InFolder, dog);
-    }
 
+
+    }
 
 
     @Test
@@ -395,9 +394,11 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
+        String folder = "/catPictures";
         //1 tag, search only in folder
-        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/catPictures")
-                .body(BodyInserters.fromObject(new ArrayList(Arrays.asList(cute))))
+        webClient.get()
+                .uri("/users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}"
+                        , ANY_USER_ID, folder, cute.getName())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
@@ -409,16 +410,18 @@ public class MediaHandlerTest {
 
 
     @Test
-    public void getMediaWithNoTagsFromTagFilterMethod() {
+    public void getMediaWithNoTags() {
         Media cat = catMediaSave.block();
         Media cat2InFolder = cat2MediaInFolderMediaSave.block();
         Media cat3InFolder = cat3MediaInFolderMediaSave.block();
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
+        String folder = "/";
         //not existing tag
-        webClient.post().uri("/users/{userId}/folders/{folderPath}/media", ANY_USER_ID, "/")
-                .body(BodyInserters.fromObject(new ArrayList(Arrays.asList(new Tag("notexisting")))))
+        webClient.get()
+                .uri("/users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}"
+                        , ANY_USER_ID, folder, "notexisting")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
