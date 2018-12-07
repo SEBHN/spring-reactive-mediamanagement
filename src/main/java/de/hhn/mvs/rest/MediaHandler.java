@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.hhn.mvs.rest.FolderUtils.SLASH;
 import static de.hhn.mvs.rest.FolderUtils.parseFolderPathFormat;
@@ -112,9 +113,7 @@ public class MediaHandler {
 
         params.forEach((name, values) -> {
             if (name.equals("tag")) {
-                for (String value : values) {
-                    tagList.add(new Tag(value));
-                }
+                tagList.addAll(values.stream().map(Tag::new).collect(Collectors.toList()));
             }
         });
 
