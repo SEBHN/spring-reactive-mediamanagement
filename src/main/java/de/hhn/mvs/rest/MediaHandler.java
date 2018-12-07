@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -110,18 +111,15 @@ public class MediaHandler {
         String parsedFolderPath = parseFolderPathFormat(folderPath);
         String userId = request.pathVariable("userId");
         List<Tag> tagList = new ArrayList<>();
-        List<String> tags  = request.queryParams().get("tag");
 
-        for(String val: tags){
-            ObjectMapper mapper = new ObjectMapper();
-            ObjectReader reader = mapper.reader().forType(Tag.class);
-            try {
-                Tag tag = reader.readValue(val);
-                tagList.add(tag);
-            } catch (IOException e) {
-                return badRequest().build();
+
+        request.queryParams().forEach((name, values) -> {
+            if (name.equals("tag")) {
+                for (String value : values) {
+                    tagList.add(new Tag(value));
+                }
             }
-        }
+        });
 
         Flux<Media> media;
         if (tagList.isEmpty())
@@ -130,6 +128,7 @@ public class MediaHandler {
             String preparedRegex = "^" + parsedFolderPath;
             media = mediaRepo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(userId, preparedRegex, tagList);
         }
+
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }
 
