@@ -93,9 +93,15 @@ public class ScurityConfig {
     }
 
     private Mono<AuthorizationDecision> currentUserMatchesPath(Mono<Authentication> authentication, AuthorizationContext context) {
+        System.out.println("MYDEBUG");
+        System.out.println(authentication.map(a -> a.getPrincipal()));
+        System.out.println(context.getVariables().get("userId"));
+
         return authentication
-                .map(a -> context.getVariables().get("user").equals(a.getName()))
+                .map(a -> context.getVariables().get("userId").equals(a.getName()))
+
                 .map(AuthorizationDecision::new);//granted -> new AuthorizationDecision(granted)
+
     }
 
     @Bean

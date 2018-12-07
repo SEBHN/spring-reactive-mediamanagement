@@ -17,6 +17,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.util.Base64;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -32,16 +33,22 @@ public class UserHandlerTest {
     @Autowired
     private WebTestClient webClient;
 
+    private Base64.Encoder encoder = Base64.getEncoder();
+
+
     private User testUser;
     private User testUser2;
     private Mono<User> userSave;
 
     @Before
     public void setUp() {
-        testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld", "testPassword123", "Token123");
-        testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", "testPassword987", "Token987");
+        testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld", encoder.encode("testPassword123".getBytes()).toString(), "Token123");
+        testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", encoder.encode("testPassword987".getBytes()).toString(), "Token987");
+        
+        userSave = userRepo.save(testUser); //Todo: encrpt pw bcrypt
 
-        userSave = userRepo.save(testUser);
+
+
     }
 
     @After
