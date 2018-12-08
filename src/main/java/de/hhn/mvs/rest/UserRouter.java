@@ -15,6 +15,7 @@ public class UserRouter {
     public RouterFunction<ServerResponse> userRoute(UserHandler userHandler) {
         return RouterFunctions
                 .route(GET("/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::get)
+                .andRoute(POST("/users/auth").and(accept(APPLICATION_JSON)), userHandler::auth)
                 .andRoute(POST("/users").and(accept(APPLICATION_JSON)), userHandler::create)
                 .filter(userHandler.illegalStateToBadRequest())
                 .andRoute(PUT("/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::update)

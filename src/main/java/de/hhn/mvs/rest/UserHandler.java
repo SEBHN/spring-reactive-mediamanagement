@@ -19,9 +19,7 @@ import java.util.UUID;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class UserHandler {
@@ -29,7 +27,7 @@ public class UserHandler {
     @Autowired
     private UserCrudRepo userRepo;
 
-    Mono<ServerResponse> get(ServerRequest request){
+    Mono<ServerResponse> get(ServerRequest request) {
         String userId = request.pathVariable("userId");
         return userRepo.findById(userId)
                 .flatMap(user -> ok().contentType(APPLICATION_JSON).body(fromObject(user)))
@@ -47,6 +45,7 @@ public class UserHandler {
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(),
                                             p.getEmail(), p.getPassword(), p.getToken());
+                                    createdUser.hashPassword();
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -78,6 +77,7 @@ public class UserHandler {
     }
 
 
+
     Mono<ServerResponse> delete(ServerRequest request) {
         String userId = request.pathVariable("userId");
         if (userId == null || userId.isEmpty()) {
@@ -86,8 +86,28 @@ public class UserHandler {
 
         return userRepo
                 .findById(userId)
-                .flatMap(existingMedia -> noContent().build(userRepo.delete(existingMedia)))
+                .flatMap(existingUser -> noContent().build(userRepo.delete(existingUser)))
                 .switchIfEmpty(notFound().build());
+    }
+
+    Mono<ServerResponse> auth(ServerRequest request) {
+        Mono<User> user = request.bodyToMono(User.class);
+        Mono<String> tokenMono = user.flatMap(p ->
+        {
+            Mono<String> stringMono = userRepo.findByEmail(p.getEmail())
+                    .map(dbUser -> {
+                        p.hashPassword();
+                        if (p.getPassword().equals(dbUser.getPassword())) {
+                            return "I am authenticated";
+                        }
+                        return "";
+                    });
+            return stringMono;
+        });
+        return ServerResponse.status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(fromPublisher(tokenMono, String.class))
+                .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {

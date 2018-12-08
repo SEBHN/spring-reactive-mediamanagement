@@ -51,14 +51,13 @@ public class UserHandlerTest {
 
         userSave = userRepo.save(testUser); //Todo: encrpt pw bcrypt
 
-
-
     }
 
     @After
     public void cleanUp() {
         userRepo.deleteAll().block();
     }
+
 
     @Test
     public void connectivity(){
@@ -76,8 +75,10 @@ public class UserHandlerTest {
                 .consumeWith(returnedUserResult -> {
                     User returnedUser = returnedUserResult.getResponseBody();
                     assertNotEquals(null, returnedUser);
-                    //assertEquals(testUser.getId(), returnedUser.getId());// Vergleich nicht möglich da ID generiert wird
                     assertEquals(testUser.getEmail(), returnedUser.getEmail());
+
+                    testUser.hashPassword();
+
                     assertEquals(testUser.getPassword(), returnedUser.getPassword());
                     assertEquals(testUser.getToken(), returnedUser.getToken());
                 });
@@ -109,13 +110,15 @@ public class UserHandlerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(User.class)
-                .consumeWith(returnedMediaResult -> {
-                    User returnedMedia = returnedMediaResult.getResponseBody();
-                    assertNotEquals(null, returnedMedia);
-                    assertEquals(testUser2.getId(), returnedMedia.getId());
-                    assertEquals(testUser2.getEmail(), returnedMedia.getEmail());
-                    assertEquals(testUser2.getPassword(), returnedMedia.getPassword());
-                    assertEquals(testUser2.getToken(), returnedMedia.getToken());
+
+                .consumeWith(returnedUserResult -> {
+                    User returnedUser = returnedUserResult.getResponseBody();
+                    assertNotEquals(null, returnedUser);
+                    assertEquals(testUser2.getId(), returnedUser.getId());
+                    assertEquals(testUser2.getEmail(), returnedUser.getEmail());
+                    assertEquals(testUser2.getPassword(), returnedUser.getPassword());
+                    assertEquals(testUser2.getToken(), returnedUser.getToken());
+
                 });
     }
 

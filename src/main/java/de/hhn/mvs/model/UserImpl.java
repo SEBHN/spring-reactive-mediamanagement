@@ -1,15 +1,21 @@
 package de.hhn.mvs.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+import java.util.Objects;
+
 @Document
-public class UserImpl implements User{
+public final class UserImpl implements User {
 
     @Id
     private String id;
@@ -20,13 +26,15 @@ public class UserImpl implements User{
     private String password;
     private String token;
 
-    private Set<String> authorities = new HashSet<>();
 
+    private Set<String> authorities = new HashSet<>();
 
     public UserImpl(){
     }
 
-    public UserImpl(String id, String email, String password, String token){
+
+    public UserImpl(String id, String email, String password, String token) {
+
         this.id = id;
         this.email = email;
         this.password = password;
@@ -59,6 +67,24 @@ public class UserImpl implements User{
     }
 
     @Override
+    @JsonProperty
+    public void hashPassword() {
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        byte[] hashInBytes = digest.digest(
+                this.password.getBytes(StandardCharsets.UTF_8));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashInBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        this.password = sb.toString();
+    }
+
+    @Override
     public String getToken() {
         return token;
     }
@@ -69,6 +95,7 @@ public class UserImpl implements User{
     }
 
     @Override
+
     public Set<String> getRoles() {
         return authorities;
     }
@@ -91,7 +118,8 @@ public class UserImpl implements User{
     }
 
     @Override
-    public String toString(){
+    public String toString() {
+
         return "User{" +
                 "id='" + id + "\'" +
                 "email='" + email + "\'" +
@@ -101,7 +129,7 @@ public class UserImpl implements User{
     }
 
     @Override
-    public boolean equals(Object o){
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserImpl user = (UserImpl) o;
@@ -140,8 +168,6 @@ public class UserImpl implements User{
     public boolean isAccountNonLocked() {
         return true;
     }
-
-    @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }

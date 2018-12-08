@@ -5,6 +5,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Set;
 
+import java.security.NoSuchAlgorithmException;
+
 @JsonDeserialize(as = UserImpl.class)
 public interface User extends UserDetails {
 
@@ -29,4 +31,8 @@ public interface User extends UserDetails {
     void addRole(String role);
 
     void addRoles(Set<String> roles);
+
+    void hashPassword();
+
+
 }
