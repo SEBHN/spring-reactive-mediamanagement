@@ -5,6 +5,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
+import de.hhn.mvs.metadata.MetadataParser;
 import de.hhn.mvs.model.FolderElements;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
@@ -165,6 +166,7 @@ public class MediaHandler {
             String fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename()).toString();
             String fileName = part.filename();
             String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+            Map<String, String> metaData = MetadataParser.parse(upload);
 
             Mono<Media> existingMediaMono = mediaRepo.findByIdAndOwnerId(id, userId);
 
@@ -175,6 +177,7 @@ public class MediaHandler {
                                 existingMedia.setName(fileName);
                                 existingMedia.setFileId(fileId);
                                 existingMedia.setFileExtension(fileExtension);
+                                existingMedia.setFileMetaData(metaData);
                                 return existingMedia;
                             }).flatMap(mediaRepo::save), Media.class))
                     .switchIfEmpty(notFound().build());

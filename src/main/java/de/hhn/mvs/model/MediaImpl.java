@@ -3,10 +3,7 @@ package de.hhn.mvs.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Document
 public final class MediaImpl implements Media {
@@ -19,6 +16,7 @@ public final class MediaImpl implements Media {
     private String filePath;
     private String ownerId;
     private List<Tag> tags;
+    private Map<String, String> fileMetadata;
 
     public MediaImpl() {
         // for jackson
@@ -122,6 +120,16 @@ public final class MediaImpl implements Media {
     }
 
     @Override
+    public void setFileMetaData(Map<String, String> fileMetadata) {
+        this.fileMetadata = fileMetadata;
+    }
+
+    @Override
+    public Map<String, String> getFileMetaData() {
+        return fileMetadata;
+    }
+
+    @Override
     public String toString() {
         return "Media{" +
                 "id='" + id + '\'' +
@@ -145,11 +153,12 @@ public final class MediaImpl implements Media {
                 Objects.equals(fileExtension, media.fileExtension) &&
                 Objects.equals(filePath, media.filePath) &&
                 Objects.equals(tags, media.tags) &&
-                Objects.equals(ownerId, media.ownerId);
+                Objects.equals(ownerId, media.ownerId) &&
+                Objects.equals(fileMetadata, media.fileMetadata);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fileId, fileExtension, filePath, tags, ownerId);
+        return Objects.hash(id, name, fileId, fileExtension, filePath, tags, ownerId, fileMetadata);
     }
 }
