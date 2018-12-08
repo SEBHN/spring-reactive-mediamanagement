@@ -24,14 +24,13 @@ public class MetadataParser {
      * @param file a path to the metadatasamplefiles which you would like to have the metadata
      * @return A map with all found metadata (key = metadata name, value = metadata value)
      * @throws IOException   thrown when no inputstream can be created
-     * @throws TikaException - thrown from tika metadata parser
-     * @throws SAXException  - thrown from tika metadata parser
      */
-    public static Map<String, String> parse(Path file) throws IOException, TikaException, SAXException {
+    public static Map<String, String> parse(Path file) throws IOException {
         Map<String, String> metaData = new HashMap<>();
 
         AutoDetectParser parser = new AutoDetectParser();
         Metadata parsedMetaData = new Metadata();
+        metaData.put("size", humanReadableByteCount(Files.size(file)));
 
         try (InputStream stream = Files.newInputStream(file)) {
             parser.parse(stream, new BodyContentHandler(), parsedMetaData);
@@ -39,8 +38,19 @@ public class MetadataParser {
             for (String type : parsedMetaData.names()) {
                 metaData.put(type, parsedMetaData.get(type));
             }
+        } catch (TikaException | SAXException e) {
+            throw new IOException(e.getMessage(), e);
         }
 
         return metaData;
+    }
+
+
+    private static String humanReadableByteCount(long bytes) {
+        int unit = 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = String.valueOf("kMGTPE".charAt(exp - 1));
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 }
