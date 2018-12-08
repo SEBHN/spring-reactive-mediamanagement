@@ -39,7 +39,7 @@ public final class MediaImpl implements Media {
     }
 
     public boolean validate() {
-        if (name == null && fileId == null && fileExtension == null && (filePath == null || filePath == "" || filePath == "/") && (tags == null || tags.size() == 0))
+        if (name == null && fileId == null && fileExtension == null && (filePath == null || filePath.isEmpty() || filePath.equals("/")) && (tags == null || tags.isEmpty()))
             throw new IllegalArgumentException("Parameters for creating a Media Object must not be empty");
         return true;
     }
