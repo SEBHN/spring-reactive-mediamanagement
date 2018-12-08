@@ -74,7 +74,7 @@ public class ScurityConfig {
      **/
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-
+/**
         http
             .authorizeExchange()
             .pathMatchers("/login", "/")
@@ -88,6 +88,14 @@ public class ScurityConfig {
             .addFilterAt(bearerAuthenticationFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
 
             .formLogin().loginPage("/login");
+**/
+        http
+                .authorizeExchange()
+                .pathMatchers("/**")
+                .authenticated()
+                .and()
+                .addFilterAt(basicAuthenticationFilter(), SecurityWebFiltersOrder.HTTP_BASIC)
+                .addFilterAt(bearerAuthenticationFilter(), SecurityWebFiltersOrder.AUTHENTICATION);
 
         return http.build();
     }

@@ -42,9 +42,13 @@ public class UserHandlerTest {
 
     @Before
     public void setUp() {
-        testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld", encoder.encode("testPassword123".getBytes()).toString(), "Token123");
-        testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", encoder.encode("testPassword987".getBytes()).toString(), "Token987");
-        
+
+        webClient.get().header("Authorization","Basic " + encoder.encodeToString("example@domain.tld:testPassword123".getBytes()));
+
+
+        testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld","testPassword123", "Token123");
+        testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", "testPassword987", "Token987");
+
         userSave = userRepo.save(testUser); //Todo: encrpt pw bcrypt
 
 
@@ -56,6 +60,10 @@ public class UserHandlerTest {
         userRepo.deleteAll().block();
     }
 
+    @Test
+    public void connectivity(){
+        webClient.get().uri("/").exchange().expectStatus().isOk();
+    }
 
     @Test
     public void createUser(){
@@ -78,7 +86,7 @@ public class UserHandlerTest {
     @Test
     public void getUser(){
         userSave.block();
-        webClient.get().uri("/users/{userId}",testUser.getId()).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/users/{userId}",testUser.getEmail()).accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
