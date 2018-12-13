@@ -2,6 +2,7 @@ package de.hhn.mvs.metadata;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
@@ -31,12 +32,14 @@ public class MetadataParser {
         AutoDetectParser parser = new AutoDetectParser();
         Metadata parsedMetaData = new Metadata();
         metaData.put("size", humanReadableByteCount(Files.size(file)));
-
+        String mimeType = Files.probeContentType(file);
         try (InputStream stream = Files.newInputStream(file)) {
             parser.parse(stream, new BodyContentHandler(), parsedMetaData);
+            MediaType contentType = MediaType.parse(mimeType);
+            MetadataTranslator translator = MetadataTranslatorFactory.get(file, contentType);
 
             for (String type : parsedMetaData.names()) {
-                metaData.put(type, parsedMetaData.get(type));
+                metaData.putAll(translator.translate(type, parsedMetaData.get(type)));
             }
         } catch (TikaException | SAXException e) {
             throw new IOException(e.getMessage(), e);

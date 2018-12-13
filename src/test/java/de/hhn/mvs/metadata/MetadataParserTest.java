@@ -20,8 +20,8 @@ public class MetadataParserTest {
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.mp3"));
         assertFalse(metadata.isEmpty());
         assertEquals("Anthem", metadata.get("title"));
-        assertEquals("63998.66015625", metadata.get("xmpDM:duration"));
-        assertEquals("44100", metadata.get("samplerate"));
+        assertEquals("00:01:03", metadata.get("duration"));
+        assertEquals("44100", metadata.get("sample rate"));
         assertEquals("441.6 kB", metadata.get("size"));
         assertEquals("audio/mpeg", metadata.get("Content-Type"));
     }
