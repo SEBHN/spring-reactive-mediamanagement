@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /***
@@ -27,7 +27,7 @@ public class MetadataParser {
      * @throws IOException   thrown when no inputstream can be created
      */
     public static Map<String, String> parse(Path file) throws IOException {
-        Map<String, String> metaData = new HashMap<>();
+        Map<String, String> metaData = new LinkedHashMap<>();
 
         AutoDetectParser parser = new AutoDetectParser();
         Metadata parsedMetaData = new Metadata();
@@ -39,8 +39,9 @@ public class MetadataParser {
             MetadataTranslator translator = MetadataTranslatorFactory.get(file, contentType);
 
             for (String type : parsedMetaData.names()) {
-                metaData.putAll(translator.translate(type, parsedMetaData.get(type)));
+                translator.collect(type, parsedMetaData.get(type));
             }
+            metaData.putAll(translator.getMetadata());
         } catch (TikaException | SAXException e) {
             throw new IOException(e.getMessage(), e);
         }

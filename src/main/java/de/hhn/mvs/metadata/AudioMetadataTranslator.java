@@ -1,17 +1,26 @@
 package de.hhn.mvs.metadata;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class AudioMetadataTranslator implements MetadataTranslator {
 
-    private final HashMap<String, String> metadata;
-    private final HashMap<String, String> translations;
+    private final Map<String, String> metadata;
+    private final Map<String, String> translations;
 
 
     AudioMetadataTranslator() {
-        metadata = new HashMap<>();
+        metadata = new LinkedHashMap<>(); // to keep following order
+        metadata.put("title", "");
+        metadata.put("album", "");
+        metadata.put("artist", "");
+        metadata.put("duration", "");
+        metadata.put("sample rate", "");
+        metadata.put("channel type", "");
+        metadata.put("Content-Type", "");
+
         translations = new HashMap<>();
         translations.put("xmpDM:genre", "genre");
         translations.put("creator", "creator");
@@ -26,7 +35,7 @@ public class AudioMetadataTranslator implements MetadataTranslator {
     }
 
     @Override
-    public Map<String, String> translate(String metadataKey, String metadataValue) {
+    public MetadataTranslator collect(String metadataKey, String metadataValue) {
         if (translations.containsKey(metadataKey)) {
             String translatedKey = translations.get(metadataKey);
             if (translatedKey.equals("duration")) {
@@ -35,9 +44,14 @@ public class AudioMetadataTranslator implements MetadataTranslator {
                 metadata.put(translatedKey, metadataValue);
             }
         }
+        return this;
+    }
 
+    @Override
+    public Map<String, String> getMetadata() {
         return metadata;
     }
+
 
     private String convertDuration(String metadataValue) {
         String milliseconds = metadataValue.substring(0, metadataValue.indexOf('.'));

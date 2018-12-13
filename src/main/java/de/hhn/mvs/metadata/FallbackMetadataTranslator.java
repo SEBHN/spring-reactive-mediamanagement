@@ -12,8 +12,13 @@ public class FallbackMetadataTranslator implements MetadataTranslator {
     }
 
     @Override
-    public Map<String, String> translate(String metadataKey, String metadataValue) {
+    public MetadataTranslator collect(String metadataKey, String metadataValue) {
         metadata.put(metadataKey, metadataValue);
+        return this;
+    }
+
+    @Override
+    public Map<String, String> getMetadata() {
         return metadata;
     }
 }

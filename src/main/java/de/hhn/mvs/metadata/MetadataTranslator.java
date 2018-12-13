@@ -4,5 +4,9 @@ import java.util.Map;
 
 public interface MetadataTranslator {
 
-    Map<String, String> translate(String metadataKey, String metadataValue);
+    MetadataTranslator collect(String metadataKey, String metadataValue);
+
+    Map<String, String> getMetadata();
+
+
 }
