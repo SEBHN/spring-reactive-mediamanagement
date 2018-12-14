@@ -1,14 +1,14 @@
 package de.hhn.mvs.metadata;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class FallbackMetadataTranslator implements MetadataTranslator {
 
-    private final HashMap<String, String> metadata;
+    private final Map<String, String> metadata;
 
     FallbackMetadataTranslator() {
-        metadata = new HashMap<>();
+        metadata = new LinkedHashMap<>();
     }
 
     @Override
