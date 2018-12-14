@@ -13,6 +13,9 @@ public class MetadataTranslatorFactory {
      * @return a new instance of {@link MetadataTranslator}
      */
     public static MetadataTranslator get(MediaType contentType) {
+        if (contentType == null || contentType.getType() == null) {
+            return new FallbackMetadataTranslator();
+        }
         switch (contentType.getType()) {
             case "audio":
                 return new AudioMetadataTranslator();
