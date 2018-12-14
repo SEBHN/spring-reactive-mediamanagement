@@ -1,10 +1,10 @@
 package de.hhn.mvs.metadata;
 
 import org.junit.Test;
+import org.springframework.util.ResourceUtils;
 
-import java.net.URISyntaxException;
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -56,13 +56,13 @@ public class MetadataParserTest {
         assertFalse(metadata.isEmpty());
         assertEquals("300", metadata.get("height"));
         assertEquals("300", metadata.get("width"));
-        assertEquals("2017-09-11T22:15:46", metadata.get("Created"));
-        assertEquals("2017-09-11T22:15:46", metadata.get("Modified"));
+        assertEquals("2017-09-12T00:15:46", metadata.get("Created"));
+        assertEquals("2017-09-12T00:15:46", metadata.get("Modified"));
         assertEquals("49.9 kB", metadata.get("size"));
         assertEquals("image/jpeg", metadata.get("Content-Type"));
     }
 
-    private Path getPathFromResource(String filename) throws URISyntaxException {
-        return Paths.get(getClass().getClassLoader().getResource("metadatasamplefiles/" + filename).toURI());
+    private Path getPathFromResource(String filename) throws FileNotFoundException {
+        return ResourceUtils.getFile("classpath:metadatasamplefiles/" + filename).toPath();
     }
 }

@@ -2,11 +2,13 @@ package de.hhn.mvs.metadata;
 
 import de.hhn.mvs.metadata.translator.MetadataTranslator;
 import de.hhn.mvs.metadata.translator.MetadataTranslatorFactory;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.springframework.util.ResourceUtils;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -31,15 +33,16 @@ public class MetadataParser {
     public static Map<String, String> parse(Path file) throws IOException {
         Map<String, String> metaData = new LinkedHashMap<>();
 
-        AutoDetectParser parser = new AutoDetectParser();
         Metadata parsedMetaData = new Metadata();
         metaData.put("size", humanReadableByteCount(Files.size(file)));
         String mimeType = Files.probeContentType(file);
         try (InputStream stream = Files.newInputStream(file)) {
-            parser.parse(stream, new BodyContentHandler(), parsedMetaData);
-            MediaType contentType = MediaType.parse(mimeType);
-            MetadataTranslator translator = MetadataTranslatorFactory.get(contentType);
+            TikaConfig config = new TikaConfig(ResourceUtils.getFile("classpath:tika.xml").toURI().toURL(), MetadataParser.class.getClassLoader());
+            AutoDetectParser parser = new AutoDetectParser(config);
 
+            parser.parse(stream, new BodyContentHandler(), parsedMetaData);
+
+            MetadataTranslator translator = MetadataTranslatorFactory.get(MediaType.parse(mimeType));
             for (String type : parsedMetaData.names()) {
                 translator.collect(type, parsedMetaData.get(type));
             }
