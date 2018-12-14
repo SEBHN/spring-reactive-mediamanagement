@@ -1,18 +1,18 @@
 package de.hhn.mvs.metadata;
 
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.sax.BodyContentHandler;
-import org.xml.sax.SAXException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.sax.BodyContentHandler;
+import org.xml.sax.SAXException;
 
 /***
  * Im responsible for parsing metadata of a given {@link Path}.
@@ -36,7 +36,7 @@ public class MetadataParser {
         try (InputStream stream = Files.newInputStream(file)) {
             parser.parse(stream, new BodyContentHandler(), parsedMetaData);
             MediaType contentType = MediaType.parse(mimeType);
-            MetadataTranslator translator = MetadataTranslatorFactory.get(file, contentType);
+            MetadataTranslator translator = MetadataTranslatorFactory.get(contentType);
 
             for (String type : parsedMetaData.names()) {
                 translator.collect(type, parsedMetaData.get(type));

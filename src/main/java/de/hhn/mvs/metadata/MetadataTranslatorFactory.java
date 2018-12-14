@@ -2,12 +2,17 @@ package de.hhn.mvs.metadata;
 
 import org.apache.tika.mime.MediaType;
 
-import java.nio.file.Path;
-
+/**
+ * Im responsible for getting you the right {@link MetadataTranslator}
+ */
 public class MetadataTranslatorFactory {
 
-
-    public static MetadataTranslator get(Path file, MediaType contentType) {
+    /**
+     * I will return you the {@link MetadataTranslator} for the passed {@link MediaType}
+     * @param contentType - the passed content/media type eg. image/png
+     * @return a new instance of {@link MetadataTranslator}
+     */
+    public static MetadataTranslator get(MediaType contentType) {
         switch (contentType.getType()) {
             case "audio":
                 return new AudioMetadataTranslator();
