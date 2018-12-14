@@ -53,14 +53,10 @@ public class MetadataParserTest {
     public void testImageJpg() throws Exception {
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.jpg"));
         assertFalse(metadata.isEmpty());
-        assertEquals("300 pixels", metadata.get("Image Height"));
-        assertEquals("300 pixels", metadata.get("Image Width"));
-        assertEquals("300", metadata.get("tiff:ImageLength"));
-        assertEquals("300", metadata.get("tiff:ImageWidth"));
-        assertEquals("2017-09-11T22:15:46", metadata.get("Creation-Date"));
-        assertEquals("2017-09-11T22:15:46", metadata.get("modified"));
-        assertEquals("Top, left side (Horizontal / normal)", metadata.get("Orientation"));
-        assertEquals("1 (Adobe Photoshop, Adobe Photoshop CS5) 1", metadata.get("Version Info"));
+        assertEquals("300", metadata.get("height"));
+        assertEquals("300", metadata.get("width"));
+        assertEquals("2017-09-11T22:15:46", metadata.get("Created"));
+        assertEquals("2017-09-11T22:15:46", metadata.get("Modified"));
         assertEquals("49.9 kB", metadata.get("size"));
         assertEquals("image/jpeg", metadata.get("Content-Type"));
     }
