@@ -5,17 +5,23 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class AudioMetadataTranslator implements MetadataTranslator {
 
     private final Map<String, String> metadata;
     private final Map<String, String> translations;
+    private Logger logger = LoggerFactory.getLogger(AudioMetadataTranslator.class);
 
 
     AudioMetadataTranslator() {
         metadata = new LinkedHashMap<>(); // use linked hash map to keep the following order
         metadata.put("title", "");
-        metadata.put("album", "");
         metadata.put("artist", "");
+        metadata.put("album", "");
+        metadata.put("year", "");
+        metadata.put("track number", "");
         metadata.put("duration", "");
         metadata.put("sample rate", "");
         metadata.put("channel type", "");
@@ -31,7 +37,8 @@ public class AudioMetadataTranslator implements MetadataTranslator {
         translations.put("samplerate", "sample rate");
         translations.put("xmpDM:duration", "duration");
         translations.put("Content-Type", "Content-Type");
-
+        translations.put("xmpDM:releaseDate","year");
+        translations.put("xmpDM:trackNumber","track number");
     }
 
     @Override
@@ -43,6 +50,8 @@ public class AudioMetadataTranslator implements MetadataTranslator {
             } else {
                 metadata.put(translatedKey, metadataValue);
             }
+        }else{
+            logger.info("Ignored audio metadata property: " + metadataKey);
         }
         return this;
     }
