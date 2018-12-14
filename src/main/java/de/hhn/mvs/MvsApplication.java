@@ -6,11 +6,13 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 
 @EnableOAuth2Sso
 @SpringBootApplication
+@RestController
 public class MvsApplication extends WebSecurityConfigurerAdapter {
 //public class MvsApplication {
 
@@ -37,10 +39,5 @@ public class MvsApplication extends WebSecurityConfigurerAdapter {
     @GetMapping("/")
     String home(Principal user) {
         return "Hello " + user.getName();
-    }
-
-    @GetMapping("/login")
-    String bla() {
-        return "Hello ";
     }
 }
