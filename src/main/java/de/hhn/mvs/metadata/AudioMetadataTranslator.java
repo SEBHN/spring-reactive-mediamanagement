@@ -1,18 +1,18 @@
 package de.hhn.mvs.metadata;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class AudioMetadataTranslator implements MetadataTranslator {
 
     private final Map<String, String> metadata;
     private final Map<String, String> translations;
-    private Logger logger = LoggerFactory.getLogger(AudioMetadataTranslator.class);
+    private Logger logger = LoggerFactory.getLogger(MetadataTranslator.class);
 
 
     AudioMetadataTranslator() {
