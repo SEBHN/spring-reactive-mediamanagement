@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,4 +42,11 @@ public class MvsApplication extends WebSecurityConfigurerAdapter {
     String home(Principal user) {
         return "Hello " + user.getName();
     }
+
+    @GetMapping("/token")
+    String token(OAuth2Authentication user) {
+        OAuth2AuthenticationDetails details = (OAuth2AuthenticationDetails) user.getDetails();
+        return details.getTokenValue();
+    }
+
 }
