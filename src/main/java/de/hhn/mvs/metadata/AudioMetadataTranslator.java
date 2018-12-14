@@ -12,7 +12,7 @@ public class AudioMetadataTranslator implements MetadataTranslator {
 
 
     AudioMetadataTranslator() {
-        metadata = new LinkedHashMap<>(); // to keep following order
+        metadata = new LinkedHashMap<>(); // use linked hash map to keep the following order
         metadata.put("title", "");
         metadata.put("album", "");
         metadata.put("artist", "");
