@@ -42,6 +42,7 @@ public class MetadataParserTest {
     public void testVideoMp4() throws Exception {
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample_1280x720.mp4"));
         assertFalse(metadata.isEmpty());
+        assertEquals("00:00:05", metadata.get("duration"));
         assertEquals("720", metadata.get("height"));
         assertEquals("1280", metadata.get("width"));
         assertEquals("1970-01-01T00:00:00Z", metadata.get("Created"));

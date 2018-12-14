@@ -18,6 +18,7 @@ public class VideoMetadataTranslator implements MetadataTranslator {
 
     VideoMetadataTranslator(MediaType type) {
         metadata = new LinkedHashMap<>(); // use linked hash map to keep the following order
+        metadata.put("duration", "");
         metadata.put("width", "");
         metadata.put("height", "");
         metadata.put("Modified", "");
@@ -28,6 +29,7 @@ public class VideoMetadataTranslator implements MetadataTranslator {
         translations = new HashMap<>();
         translations.put(TIFF.IMAGE_LENGTH.getName(), "height");
         translations.put(TIFF.IMAGE_WIDTH.getName(), "width");
+        translations.put("xmpDM:duration", "duration");
         translations.put("Creation-Date", "Created");
         translations.put("modified", "Modified");
     }
@@ -35,7 +37,12 @@ public class VideoMetadataTranslator implements MetadataTranslator {
     @Override
     public MetadataTranslator collect(String metadataKey, String metadataValue) {
         if (translations.containsKey(metadataKey)) {
-            metadata.put(translations.get(metadataKey), metadataValue);
+            String translatedKey = translations.get(metadataKey);
+            if (translatedKey.equals("duration")) {
+                metadata.put(translatedKey, Duration.toHumanFromSeconds(metadataValue));
+            } else {
+                metadata.put(translatedKey, metadataValue);
+            }
         } else {
             logger.info("Ignored video metadata property: " + metadataKey);
         }

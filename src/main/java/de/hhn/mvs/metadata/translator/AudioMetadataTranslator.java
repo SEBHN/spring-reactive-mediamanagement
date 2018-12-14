@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class AudioMetadataTranslator implements MetadataTranslator {
 
@@ -46,7 +45,7 @@ public class AudioMetadataTranslator implements MetadataTranslator {
         if (translations.containsKey(metadataKey)) {
             String translatedKey = translations.get(metadataKey);
             if (translatedKey.equals("duration")) {
-                metadata.put(translatedKey, convertDuration(metadataValue));
+                metadata.put(translatedKey, Duration.toHumanFromMillis(metadataValue));
             } else {
                 metadata.put(translatedKey, metadataValue);
             }
@@ -61,13 +60,4 @@ public class AudioMetadataTranslator implements MetadataTranslator {
         return metadata;
     }
 
-
-    private String convertDuration(String metadataValue) {
-        String milliseconds = metadataValue.substring(0, metadataValue.indexOf('.'));
-        long millis = Long.valueOf(milliseconds);
-        return String.format("%02d:%02d:%02d",
-                TimeUnit.MILLISECONDS.toHours(millis),
-                TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-    }
 }
