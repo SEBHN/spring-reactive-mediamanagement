@@ -1,5 +1,9 @@
 package de.hhn.mvs.metadata;
 
+import de.hhn.mvs.metadata.translator.AudioMetadataTranslator;
+import de.hhn.mvs.metadata.translator.FallbackMetadataTranslator;
+import de.hhn.mvs.metadata.translator.ImageMetadataTranslator;
+import de.hhn.mvs.metadata.translator.MetadataTranslatorFactory;
 import org.apache.tika.mime.MediaType;
 import org.junit.Test;
 

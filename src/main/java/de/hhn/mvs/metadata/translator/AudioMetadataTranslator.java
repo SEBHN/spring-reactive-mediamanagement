@@ -1,4 +1,4 @@
-package de.hhn.mvs.metadata;
+package de.hhn.mvs.metadata.translator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
