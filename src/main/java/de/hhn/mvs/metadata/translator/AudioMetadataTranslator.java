@@ -21,9 +21,11 @@ public class AudioMetadataTranslator implements MetadataTranslator {
         metadata.put("album", "");
         metadata.put("year", "");
         metadata.put("track number", "");
+        metadata.put("genre", "");
         metadata.put("duration", "");
         metadata.put("sample rate", "");
         metadata.put("channel type", "");
+        metadata.put("creator", "");
         metadata.put("Content-Type", "");
 
         translations = new HashMap<>();
