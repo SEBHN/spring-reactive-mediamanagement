@@ -184,26 +184,26 @@ public class MediaHandler {
 
     private Mono<? extends ServerResponse> handleUpload(String id, String userId, FilePart part) {
         try {
-            Path upload = Files.createTempFile("mvs_", "_upload");
-            part.transferTo(upload.toFile());
+            Path upload = Files.createTempFile("mvs_", "_upload_" + part.filename());
+            Mono<Void> fileTransferedMono = part.transferTo(upload.toFile());
             String fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename()).toString();
             String fileName = part.filename();
             String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
-            Map<String, String> metaData = MetadataParser.parse(upload);
-
             Mono<Media> existingMediaMono = mediaRepo.findByIdAndOwnerId(id, userId);
 
-            return ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(fromPublisher(
-                            existingMediaMono.map(existingMedia -> {
-                                existingMedia.setName(fileName);
-                                existingMedia.setFileId(fileId);
-                                existingMedia.setFileExtension(fileExtension);
-                                existingMedia.setFileMetaData(metaData);
-                                return existingMedia;
-                            }).flatMap(mediaRepo::save), Media.class))
-                    .switchIfEmpty(notFound().build());
+            return fileTransferedMono.then(
+                    ok()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(fromPublisher(
+                                    existingMediaMono.map(existingMedia -> {
+                                        existingMedia.setName(fileName);
+                                        existingMedia.setFileId(fileId);
+                                        existingMedia.setFileExtension(fileExtension);
+                                        existingMedia.setFileMetaData(MetadataParser.parse(upload));
+                                        return existingMedia;
+                                    }).flatMap(mediaRepo::save), Media.class))
+                            .switchIfEmpty(notFound().build())
+            );
         } catch (IOException e) {
             return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
         }
