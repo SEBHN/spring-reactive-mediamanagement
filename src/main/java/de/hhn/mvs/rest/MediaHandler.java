@@ -5,6 +5,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
+import de.hhn.mvs.database.MediaTemplateOperations;
 import de.hhn.mvs.model.*;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,10 +52,12 @@ public class MediaHandler {
     private MongoDbFactory mongoDbFactory;
 
     private final GridFsTemplate gridFsTemplate;
+    private MediaTemplateOperations mediaTemplateOps;
 
     @Autowired
     public MediaHandler(GridFsTemplate gridFsTemplate) {
         this.gridFsTemplate = gridFsTemplate;
+        this.mediaTemplateOps = new MediaTemplateOperations();
     }
 
     Mono<ServerResponse> get(ServerRequest request) {
@@ -122,7 +125,7 @@ public class MediaHandler {
             media = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
         else {
             String preparedRegex = "^" + parsedFolderPath;
-            media = mediaRepo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(userId, preparedRegex, tagList);
+            media = mediaTemplateOps.findByIncasesenstitiveTags(userId, preparedRegex, tagList);
         }
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }
