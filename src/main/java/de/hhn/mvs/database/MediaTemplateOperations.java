@@ -1,14 +1,18 @@
 package de.hhn.mvs.database;
 
 import de.hhn.mvs.model.Media;
+import de.hhn.mvs.model.MediaImpl;
 import de.hhn.mvs.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Collation;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,13 +24,11 @@ public class MediaTemplateOperations {
     @Autowired
     MediaCrudRepo repo;
 
-    public Flux<Media> findByIncasesenstitiveTags(String ownerId, String regex, List<Tag> tags){
-        //filter { 'ownerId': ?0, filePath: {$regex: ?1}, tags: { $all : ?2}}
-//        Query query = new Query(filter);
-//        query.collation(Collation.of("en").
-//                strength(Collation.ComparisonLevel.secondary()));
-//        template.find(query,clazz,collection);
-        return repo.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll(ownerId, regex,  tags);
+    public Flux<Media> findAllByOwnerIdAndFilePathRegexAndTagsContainingAll_notCaseSensitive(String ownerId, String regex, List<Tag> tags){
+        Criteria c = Criteria.where("ownerId").is(ownerId).and("filePath").regex(regex).and("tags").all(tags);
+        Query query = new Query(c);
+        query.collation(Collation.of("en").strength(Collation.ComparisonLevel.secondary())); //find with incasesensitive index
+        return template.find(query, Media.class);
     }
 
 }

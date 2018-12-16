@@ -126,7 +126,7 @@ public class MediaHandler {
             media = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
         else {
             String preparedRegex = "^" + parsedFolderPath;
-            media = mediaTemplateOps.findByIncasesenstitiveTags(userId, preparedRegex, tagList);
+            media = mediaTemplateOps.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll_notCaseSensitive( userId, preparedRegex, tagList);
         }
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }

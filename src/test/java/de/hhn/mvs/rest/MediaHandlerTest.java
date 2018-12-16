@@ -381,8 +381,25 @@ public class MediaHandlerTest {
                 .hasSize(3)
                 .contains(cat, cat2InFolder, kitten)
                 .doesNotContain(cat3InFolder, dog);
+    }
 
+    @Test
+    public void getMediaWithOneTagFromRoot_upperCase() {
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        Media dog = dogMediaSave.block();
 
+        String folder = "/";//.replace("/", "%2F");
+
+        webClient.get().uri("users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", new Tag("CUTE").getName())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Media.class)
+                .hasSize(3)
+                .contains(cat, cat2InFolder, kitten)
+                .doesNotContain(cat3InFolder, dog);
     }
 
 
