@@ -52,12 +52,13 @@ public class MediaHandler {
     private MongoDbFactory mongoDbFactory;
 
     private final GridFsTemplate gridFsTemplate;
+
+    @Autowired
     private MediaTemplateOperations mediaTemplateOps;
 
     @Autowired
     public MediaHandler(GridFsTemplate gridFsTemplate) {
         this.gridFsTemplate = gridFsTemplate;
-        this.mediaTemplateOps = new MediaTemplateOperations();
     }
 
     Mono<ServerResponse> get(ServerRequest request) {

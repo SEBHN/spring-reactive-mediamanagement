@@ -4,10 +4,14 @@ import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Collation;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
 
+@Service
 public class MediaTemplateOperations {
 
     @Autowired
