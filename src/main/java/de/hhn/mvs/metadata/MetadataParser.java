@@ -30,13 +30,14 @@ public class MetadataParser {
      * @return A map with all found metadata (key = metadata name, value = metadata value)
      * @throws IOException   thrown when no inputstream can be created
      */
-    public static Map<String, String> parse(Path file) throws IOException {
+    public static Map<String, String> parse(Path file) {
         Map<String, String> metaData = new LinkedHashMap<>();
 
         Metadata parsedMetaData = new Metadata();
-        metaData.put("size", humanReadableByteCount(Files.size(file)));
-        String mimeType = Files.probeContentType(file);
         try (InputStream stream = Files.newInputStream(file)) {
+            metaData.put("size", humanReadableByteCount(Files.size(file)));
+            String mimeType = Files.probeContentType(file);
+
             TikaConfig config = new TikaConfig(ResourceUtils.getFile("classpath:tika.xml").toURI().toURL(), MetadataParser.class.getClassLoader());
             AutoDetectParser parser = new AutoDetectParser(config);
 
@@ -47,8 +48,8 @@ public class MetadataParser {
                 translator.collect(type, parsedMetaData.get(type));
             }
             metaData.putAll(translator.getMetadata());
-        } catch (TikaException | SAXException e) {
-            throw new IOException(e.getMessage(), e);
+        } catch (TikaException | SAXException | IOException e) {
+            e.printStackTrace();
         }
 
         return metaData;
