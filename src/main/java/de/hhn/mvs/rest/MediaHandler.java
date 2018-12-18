@@ -246,6 +246,16 @@ public class MediaHandler {
                 .switchIfEmpty(notFound().build());
     }
 
+
+    Mono<ServerResponse> deleteFolder(ServerRequest request) {
+        String userId = request.pathVariable("userId");
+        String filePath = request.pathVariable("folderPath");
+
+        return noContent()
+                .build(mediaRepo.deleteAllByOwnerIdAndFilePathStartingWith(userId, filePath));
+                //.switchIfEmpty(notFound().build());
+    }
+
     /**
      * for error handling see: https://stackoverflow.com/questions/48711872/handling-exceptions-and-returning-proper-http-code-with-webflux
      */
