@@ -372,7 +372,7 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        String folder = "/";//.replace("/", "%2F");
+        String folder = "/";
 
         webClient.get().uri("users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", cute.getName())
                 .exchange()
@@ -391,7 +391,7 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        String folder = "/";//.replace("/", "%2F");
+        String folder = "/";
 
         webClient.get().uri("users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", new Tag("CUTE").getName())
                 .exchange()
