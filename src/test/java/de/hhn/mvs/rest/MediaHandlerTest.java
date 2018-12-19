@@ -446,6 +446,27 @@ public class MediaHandlerTest {
 
     }
 
+    @Test
+    public void deleteFolder(){
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        Media kitten = kittenMediaInFolderMediaSave.block();
+        Media dog = dogMediaSave.block();
+
+        webClient.delete().uri("/users/{userId}/folders/{folderPath}", ANY_USER_ID, "catPictures")
+                .exchange()
+                .expectStatus().isNoContent();
+
+        webClient.get().uri("/users/{userId}/media", ANY_USER_ID).accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(Media.class)
+                .hasSize(3)
+                .contains(cat, kitten, dog)
+                .doesNotContain(cat2InFolder, cat3InFolder);
+    }
 
     private EntityExchangeResult<Media> createMedia(Media media) {
         return webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
