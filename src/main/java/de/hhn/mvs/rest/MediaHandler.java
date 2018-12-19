@@ -4,6 +4,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.result.DeleteResult;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.database.MediaTemplateOperations;
 import de.hhn.mvs.model.*;
@@ -126,7 +127,7 @@ public class MediaHandler {
             media = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
         else {
             String preparedRegex = "^" + parsedFolderPath;
-            media = mediaTemplateOps.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll_notCaseSensitive( userId, preparedRegex, tagList);
+            media = mediaTemplateOps.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll_notCaseSensitive(userId, preparedRegex, tagList);
         }
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }
@@ -255,9 +256,13 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
         String filePath = request.pathVariable("folderPath");
 
-        return noContent()
-                .build(mediaRepo.deleteAllByOwnerIdAndFilePathStartingWith(userId, filePath));
-                //.switchIfEmpty(notFound().build());
+        return mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
+                .flatMap(m -> {
+                    if (m.getDeletedCount() == 0)
+                        return notFound().build();
+                    else
+                        return noContent().build();
+                });
     }
 
     /**
