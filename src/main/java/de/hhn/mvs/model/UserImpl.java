@@ -1,18 +1,16 @@
 package de.hhn.mvs.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Document
 public final class UserImpl implements User {
@@ -24,21 +22,21 @@ public final class UserImpl implements User {
     private String email;
 
     private String password;
-    private String token;
 
 
-    private Set<String> authorities = new HashSet<>();
+   private List<String> authorities = new ArrayList<>();
 
     public UserImpl(){
     }
 
-
-    public UserImpl(String id, String email, String password, String token) {
-
+    public UserImpl(String id, String email, String raw_password, List<String> authorities) {
+        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
         this.id = id;
         this.email = email;
-        this.password = password;
-        this.token = token;
+        this.password = encoder.encode(raw_password);
+        //this.authorities.addAll(authorities);
+        //TODO: maybe not nice but well
+       // if(!this.authorities.contains("ROLE_USER")) authorities.add("ROLE_USER");
     }
 
     @Override
@@ -63,97 +61,35 @@ public final class UserImpl implements User {
 
     @Override
     public void setPassword(String password) {
-        this.password = password;
+        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        this.password = encoder.encode(password);
     }
 
     @Override
-    @JsonProperty
-    public void hashPassword() {
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        byte[] hashInBytes = digest.digest(
-                this.password.getBytes(StandardCharsets.UTF_8));
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashInBytes) {
-            sb.append(String.format("%02x", b));
-        }
-        this.password = sb.toString();
-    }
-
-    @Override
-    public String getToken() {
-        return token;
-    }
-
-    @Override
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    @Override
-
-    public Set<String> getRoles() {
+    public List<String> getRoles() {
         return authorities;
     }
 
-
     @Override
-    public void setRoles(Set<String> roles) {
+    public void setRoles(List<String> roles) {
         this.authorities.clear();
         this.authorities.addAll(roles);
-    }
-
-    @Override
-    public void addRole(String role) {
-        this.authorities.add(role);
-    }
-
-    @Override
-    public void addRoles(Set<String> roles) {
-        this.authorities.addAll(roles);
-    }
-
-    @Override
-    public String toString() {
-
-        return "User{" +
-                "id='" + id + "\'" +
-                "email='" + email + "\'" +
-                "password='" + password + "\'" +
-                "token='" + token + "\'" +
-                "}";
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserImpl user = (UserImpl) o;
-        return Objects.equals(id, user.id) &&
-                Objects.equals(email, user.email) &&
-                Objects.equals(password, user.password) &&
-                Objects.equals(token, user.token);
-    }
-
-    @Override
-    public int hashCode(){
-        return Objects.hash(id, email, password, token);
     }
 
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> tmp = new ArrayList<GrantedAuthority>();
+        List<GrantedAuthority> tmp = new ArrayList<>();
         for (String role : authorities) {
             tmp.add(new SimpleGrantedAuthority(role));
         }
         return tmp;
     }
 
+    /**
+     * Where to find the Username for SecurityContext
+     * @return String (username as email)
+     */
     @Override
     public String getUsername() {
         return getEmail();

@@ -4,9 +4,10 @@ import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -27,6 +28,8 @@ public class UserHandler {
     @Autowired
     private UserCrudRepo userRepo;
 
+    PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
     Mono<ServerResponse> get(ServerRequest request) {
         String userId = request.pathVariable("userId");
         return userRepo.findById(userId)
@@ -44,13 +47,9 @@ public class UserHandler {
                                 user.map(p ->
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(),
-                                            p.getEmail(), p.getPassword(), p.getToken());
-                                    createdUser.hashPassword();
+                                            p.getEmail(), p.getPassword(), p.getRoles());
                                     return createdUser;
-                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .flatMap(userRepo::save), User.class)
-
+                                }).flatMap(userRepo::save), User.class)
                 )
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
@@ -71,7 +70,7 @@ public class UserHandler {
                                 fromPublisher(
                                         user.map(p ->
                                                 new UserImpl(userId,
-                                                        p.getEmail(), p.getPassword(),  p.getToken()))
+                                                        p.getEmail(), p.getPassword(), p.getRoles()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }
@@ -89,7 +88,7 @@ public class UserHandler {
                 .flatMap(existingUser -> noContent().build(userRepo.delete(existingUser)))
                 .switchIfEmpty(notFound().build());
     }
-
+/*
     Mono<ServerResponse> auth(ServerRequest request) {
         Mono<User> user = request.bodyToMono(User.class);
         Mono<String> tokenMono = user.flatMap(p ->
@@ -109,7 +108,7 @@ public class UserHandler {
                 .body(fromPublisher(tokenMono, String.class))
                 .switchIfEmpty(ServerResponse.status(HttpStatus.UNAUTHORIZED).build());
     }
-
+*/
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
                 .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));

@@ -89,7 +89,7 @@ public class ScurityConfig {
 
             .formLogin().loginPage("/login");
 **/
-        http
+        http.csrf().disable()
                 .authorizeExchange()
                 .pathMatchers("/**")
                 .authenticated()

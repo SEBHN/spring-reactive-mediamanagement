@@ -3,9 +3,7 @@ package de.hhn.mvs.model;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Set;
-
-import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @JsonDeserialize(as = UserImpl.class)
 public interface User extends UserDetails {
@@ -20,19 +18,10 @@ public interface User extends UserDetails {
 
     void setPassword(String password);
 
-    String getToken();
+    List<String> getRoles();
 
-    void setToken(String token);
+    void setRoles(List<String> roles);
 
-    Set<String> getRoles();
-
-    void setRoles(Set<String> roles);
-
-    void addRole(String role);
-
-    void addRoles(Set<String> roles);
-
-    void hashPassword();
 
 
 }
