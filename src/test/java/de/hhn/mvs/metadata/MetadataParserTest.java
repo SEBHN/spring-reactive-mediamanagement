@@ -23,7 +23,7 @@ public class MetadataParserTest {
         assertEquals("00:01:03", metadata.get("duration"));
         assertEquals("44100", metadata.get("sample rate"));
         assertEquals("441.6 kB", metadata.get("size"));
-        assertEquals("audio/mpeg", metadata.get("Content-Type"));
+        assertEquals("audio/mpeg", metadata.get("content-type"));
     }
 
     @Test
@@ -45,10 +45,10 @@ public class MetadataParserTest {
         assertEquals("00:00:05", metadata.get("duration"));
         assertEquals("720", metadata.get("height"));
         assertEquals("1280", metadata.get("width"));
-        assertEquals("1970-01-01T00:00:00Z", metadata.get("Created"));
-        assertEquals("1970-01-01T00:00:00Z", metadata.get("Modified"));
+        assertEquals("1970-01-01T00:00:00Z", metadata.get("created"));
+        assertEquals("1970-01-01T00:00:00Z", metadata.get("modified"));
         assertEquals("1.0 MB", metadata.get("size"));
-        assertEquals("video/mp4", metadata.get("Content-Type"));
+        assertEquals("video/mp4", metadata.get("content-type"));
     }
 
     @Test
@@ -58,7 +58,7 @@ public class MetadataParserTest {
         assertEquals("300", metadata.get("height"));
         assertEquals("300", metadata.get("width"));
         assertEquals("49.9 kB", metadata.get("size"));
-        assertEquals("image/jpeg", metadata.get("Content-Type"));
+        assertEquals("image/jpeg", metadata.get("content-type"));
     }
 
     private Path getPathFromResource(String filename) throws FileNotFoundException {

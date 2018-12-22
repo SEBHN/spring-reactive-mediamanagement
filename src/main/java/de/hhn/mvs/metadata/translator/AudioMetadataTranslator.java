@@ -1,11 +1,11 @@
 package de.hhn.mvs.metadata.translator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AudioMetadataTranslator implements MetadataTranslator {
 
@@ -26,7 +26,7 @@ public class AudioMetadataTranslator implements MetadataTranslator {
         metadata.put("sample rate", "");
         metadata.put("channel type", "");
         metadata.put("creator", "");
-        metadata.put("Content-Type", "");
+        metadata.put("content-type", "");
 
         translations = new HashMap<>();
         translations.put("xmpDM:genre", "genre");
@@ -37,7 +37,7 @@ public class AudioMetadataTranslator implements MetadataTranslator {
         translations.put("title", "title");
         translations.put("samplerate", "sample rate");
         translations.put("xmpDM:duration", "duration");
-        translations.put("Content-Type", "Content-Type");
+        translations.put("Content-Type", "content-type");
         translations.put("xmpDM:releaseDate","year");
         translations.put("xmpDM:trackNumber","track number");
     }

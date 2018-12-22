@@ -1,13 +1,13 @@
 package de.hhn.mvs.metadata.translator;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class VideoMetadataTranslator implements MetadataTranslator {
 
@@ -21,17 +21,17 @@ public class VideoMetadataTranslator implements MetadataTranslator {
         metadata.put("duration", "");
         metadata.put("width", "");
         metadata.put("height", "");
-        metadata.put("Modified", "");
-        metadata.put("Created", "");
+        metadata.put("modified", "");
+        metadata.put("created", "");
         // override content-type (for some reason tika thinks its application/mp4 instead of video/mp4)
-        metadata.put("Content-Type", type.toString());
+        metadata.put("content-type", type.toString());
 
         translations = new HashMap<>();
         translations.put(TIFF.IMAGE_LENGTH.getName(), "height");
         translations.put(TIFF.IMAGE_WIDTH.getName(), "width");
         translations.put("xmpDM:duration", "duration");
-        translations.put("Creation-Date", "Created");
-        translations.put("modified", "Modified");
+        translations.put("Creation-Date", "created");
+        translations.put("modified", "modified");
     }
 
     @Override

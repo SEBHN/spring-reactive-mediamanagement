@@ -1,12 +1,12 @@
 package de.hhn.mvs.metadata.translator;
 
-import org.apache.tika.metadata.TIFF;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.apache.tika.metadata.TIFF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImageMetadataTranslator implements MetadataTranslator {
 
@@ -18,16 +18,16 @@ public class ImageMetadataTranslator implements MetadataTranslator {
         metadata = new LinkedHashMap<>(); // use linked hash map to keep the following order
         metadata.put("width", "");
         metadata.put("height", "");
-        metadata.put("Modified", "");
-        metadata.put("Created", "");
-        metadata.put("Content-Type", "");
+        metadata.put("modified", "");
+        metadata.put("created", "");
+        metadata.put("content-type", "");
 
         translations = new HashMap<>();
         translations.put(TIFF.IMAGE_LENGTH.getName(), "height");
         translations.put(TIFF.IMAGE_WIDTH.getName(), "width");
-        translations.put("Creation-Date", "Created");
-        translations.put("modified", "Modified");
-        translations.put("Content-Type", "Content-Type");
+        translations.put("Creation-Date", "created");
+        translations.put("modified", "modified");
+        translations.put("Content-Type", "content-type");
     }
 
     @Override
