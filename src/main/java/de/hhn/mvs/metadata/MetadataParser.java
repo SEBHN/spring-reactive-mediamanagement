@@ -1,5 +1,12 @@
 package de.hhn.mvs.metadata;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import de.hhn.mvs.metadata.translator.MetadataTranslator;
 import de.hhn.mvs.metadata.translator.MetadataTranslatorFactory;
 import org.apache.tika.config.TikaConfig;
@@ -10,13 +17,6 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.springframework.util.ResourceUtils;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /***
  * Im responsible for parsing metadata of a given {@link Path}.
@@ -45,7 +45,10 @@ public class MetadataParser {
 
             MetadataTranslator translator = MetadataTranslatorFactory.get(MediaType.parse(mimeType));
             for (String type : parsedMetaData.names()) {
-                translator.collect(type, parsedMetaData.get(type));
+                String metadataValue = parsedMetaData.get(type);
+                if (!metadataValue.isEmpty()){
+                    translator.collect(type, metadataValue);
+                }
             }
             metaData.putAll(translator.getMetadata());
         } catch (TikaException | SAXException | IOException e) {
