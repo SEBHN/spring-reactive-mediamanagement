@@ -38,7 +38,7 @@ public class MetadataParser {
             metaData.put("size", humanReadableByteCount(Files.size(file)));
             String mimeType = Files.probeContentType(file);
 
-            TikaConfig config = new TikaConfig(ResourceUtils.getFile("classpath:tika.xml").toURI().toURL(), MetadataParser.class.getClassLoader());
+            TikaConfig config = new TikaConfig(ResourceUtils.getURL("classpath:tika.xml"), MetadataParser.class.getClassLoader());
             AutoDetectParser parser = new AutoDetectParser(config);
 
             parser.parse(stream, new BodyContentHandler(), parsedMetaData);
