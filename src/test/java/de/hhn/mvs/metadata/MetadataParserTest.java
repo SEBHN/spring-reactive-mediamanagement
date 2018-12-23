@@ -43,6 +43,63 @@ public class MetadataParserTest {
     }
 
     @Test
+    public void testDocumentTxt() throws Exception{
+        Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.txt"));
+        assertEquals("ISO-8859-1", metadata.get("encoding"));
+        assertEquals("18 B", metadata.get("size"));
+        assertEquals("text/plain", metadata.get("content-type"));
+        assertFalse(metadata.isEmpty());
+    }
+
+    @Test
+    public void testDocumentXML() throws Exception{
+        Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.xml"));
+        assertEquals("170 B", metadata.get("size"));
+        assertEquals("application/xml", metadata.get("content-type"));
+        assertFalse(metadata.isEmpty());
+    }
+
+    @Test
+    public void testDocumentJSON() throws Exception{
+        Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.json"));
+        assertEquals("603 B", metadata.get("size"));
+        assertEquals("windows-1252", metadata.get("encoding"));
+        assertEquals("application/json", metadata.get("content-type"));
+        assertFalse(metadata.isEmpty());
+    }
+
+    @Test
+    public void testDocumentDocX() throws Exception{
+        Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.docx"));
+        assertEquals("Manuel", metadata.get("creator"));
+        assertEquals("Manuel", metadata.get("author"));
+        assertEquals("2018-12-23T18:14:00Z", metadata.get("created"));
+        assertEquals("2018-12-23T18:18:00Z", metadata.get("modified"));
+        assertEquals("11.6 kB", metadata.get("size"));
+        assertEquals("1", metadata.get("pages"));
+        assertEquals("1", metadata.get("words"));
+        assertEquals("7", metadata.get("characters"));
+        assertEquals("application/vnd.openxmlformats-officedocument.wordprocessingml.document", metadata.get("content-type"));
+        assertFalse(metadata.isEmpty());
+    }
+
+    @Test
+    public void testDocumentOdt() throws Exception{
+        Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.odt"));
+        assertEquals("Jürgen Schmidt", metadata.get("creator"));
+        assertEquals("Jürgen Schmidt", metadata.get("author"));
+        assertEquals("2002-12-18T12:28:35", metadata.get("created"));
+        assertEquals("2002-12-18T12:31:15", metadata.get("modified"));
+        assertEquals("6.6 kB", metadata.get("size"));
+        assertEquals("1", metadata.get("pages"));
+        assertEquals("77", metadata.get("words"));
+        assertEquals("511", metadata.get("characters"));
+        assertEquals("application/vnd.oasis.opendocument.text", metadata.get("content-type"));
+        assertFalse(metadata.isEmpty());
+    }
+
+
+    @Test
     public void testVideoMp4() throws Exception {
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample_1280x720.mp4"));
         assertFalse(metadata.isEmpty());
