@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 
 class MetadataTranslatorHelper {
 
-    private final LinkedHashMap<String, String> metadata;
-    private final HashMap<String, String> translations;
+    private final Map<String, String> metadata;
+    private final Map<String, String> translations;
     private final Logger logger;
 
     MetadataTranslatorHelper(Logger logger) {
@@ -38,6 +38,10 @@ class MetadataTranslatorHelper {
         } else {
             logger.info("Ignored metadata property: " + metadataKey);
         }
+    }
+
+    Map<String, String> getTranslations() {
+        return translations;
     }
 
     Map<String, String> getMetadata() {
