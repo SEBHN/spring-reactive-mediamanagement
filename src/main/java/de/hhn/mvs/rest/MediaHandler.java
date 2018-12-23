@@ -15,6 +15,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsCriteria;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
@@ -249,7 +250,10 @@ public class MediaHandler {
 
         return mediaRepo
                 .findByIdAndOwnerId(id, userId)
-                .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
+                .flatMap(existingMedia -> {
+                    gridFsTemplate.delete(new Query(GridFsCriteria.where("id").is(existingMedia.getFileId())));
+                    return noContent().build(mediaRepo.delete(existingMedia));
+                })
                 .switchIfEmpty(notFound().build());
     }
 
