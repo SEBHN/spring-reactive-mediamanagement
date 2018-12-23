@@ -33,7 +33,14 @@ public class MetadataTranslatorFactory {
                 switch (contentType.getSubtype()) {
                     case "pdf":
                         return new PDFMetadataTranslator();
+                    case "xml":
+                        return new TextMetadataTranslator(contentType);
+                    case "json":
+                        return new TextMetadataTranslator(contentType);
                 }
+                break;
+            case "text":
+                return new TextMetadataTranslator(contentType);
         }
         logger.info("No Translator found for conent-type '" + contentType + "', returning fallback");
         return new FallbackMetadataTranslator();
