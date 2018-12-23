@@ -13,6 +13,7 @@ public class MetadataTranslatorFactory {
 
     /**
      * I will return you the {@link MetadataTranslator} for the passed {@link MediaType}
+     *
      * @param contentType - the passed content/media type eg. image/png
      * @return a new instance of {@link MetadataTranslator}
      */
@@ -28,8 +29,13 @@ public class MetadataTranslatorFactory {
                 return new ImageMetadataTranslator();
             case "video":
                 return new VideoMetadataTranslator(contentType);
+            case "application":
+                switch (contentType.getSubtype()) {
+                    case "pdf":
+                        return new PDFMetadataTranslator();
+                }
         }
-        logger.info("No Translator found, returning fallback");
+        logger.info("No Translator found for conent-type '" + contentType + "', returning fallback");
         return new FallbackMetadataTranslator();
     }
 }

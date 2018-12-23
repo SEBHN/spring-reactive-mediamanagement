@@ -1,11 +1,11 @@
 package de.hhn.mvs.metadata;
 
-import org.junit.Test;
-import org.springframework.util.ResourceUtils;
-
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.Map;
+
+import org.junit.Test;
+import org.springframework.util.ResourceUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,11 +30,15 @@ public class MetadataParserTest {
     public void testDocumentPdf() throws Exception {
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.pdf"));
         assertEquals("Manuel", metadata.get("creator"));
-        assertEquals("Manuel", metadata.get("Author"));
-        assertEquals("2018-12-06T20:51:08Z", metadata.get("Creation-Date"));
+        assertEquals("Manuel", metadata.get("author"));
+        assertEquals("2018-12-06T20:51:08Z", metadata.get("created"));
         assertEquals("2018-12-06T20:51:08Z", metadata.get("modified"));
         assertEquals("181.7 kB", metadata.get("size"));
-        assertEquals("application/pdf", metadata.get("Content-Type"));
+        assertEquals("de-CH", metadata.get("language"));
+        assertEquals("false", metadata.get("encrypted"));
+        assertEquals("1", metadata.get("pages"));
+        assertEquals("Microsoft® Word 2016", metadata.get("producer"));
+        assertEquals("application/pdf", metadata.get("content-type"));
         assertFalse(metadata.isEmpty());
     }
 
