@@ -40,7 +40,7 @@ public class OpenDocumentMetadataTranslator implements MetadataTranslator {
         if (translations.containsKey(metadataKey)) {
             metadata.put(translations.get(metadataKey), metadataValue);
         } else {
-            logger.info("Ignored word metadata property: " + metadataKey);
+            logger.info("Ignored open document metadata property: " + metadataKey);
         }
         return this;
     }
