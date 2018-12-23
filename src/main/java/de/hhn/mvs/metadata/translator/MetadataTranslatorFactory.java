@@ -46,7 +46,7 @@ public class MetadataTranslatorFactory {
             case "text":
                 return new TextMetadataTranslator(contentType);
         }
-        logger.info("No Translator found for conent-type '" + contentType + "', returning fallback");
+        logger.info("No Translator found for content-type '" + contentType + "', returning fallback");
         return new FallbackMetadataTranslator();
     }
 }
