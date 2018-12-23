@@ -32,7 +32,6 @@ public class WordMetadataTranslator implements MetadataTranslator {
         translations.put("Page-Count", "pages");
         translations.put("Word-Count", "words");
         translations.put("Character Count", "characters");
-        translations.put("producer", "producer");
         translations.put("modified", "modified");
         translations.put("meta:creation-date", "created");
         translations.put("Content-Type", "content-type");
