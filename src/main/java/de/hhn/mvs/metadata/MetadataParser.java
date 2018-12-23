@@ -9,6 +9,7 @@ import java.util.Map;
 
 import de.hhn.mvs.metadata.translator.MetadataTranslator;
 import de.hhn.mvs.metadata.translator.MetadataTranslatorFactory;
+import org.apache.tika.Tika;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -36,9 +37,9 @@ public class MetadataParser {
         Metadata parsedMetaData = new Metadata();
         try (InputStream stream = Files.newInputStream(file)) {
             metaData.put("size", humanReadableByteCount(Files.size(file)));
-            String mimeType = Files.probeContentType(file);
 
             TikaConfig config = new TikaConfig(ResourceUtils.getURL("classpath:tika.xml"), MetadataParser.class.getClassLoader());
+            String mimeType = new Tika(config).detect(file);
             AutoDetectParser parser = new AutoDetectParser(config);
 
             parser.parse(stream, new BodyContentHandler(), parsedMetaData);
