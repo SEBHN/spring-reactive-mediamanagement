@@ -37,6 +37,8 @@ public class MetadataTranslatorFactory {
                         return new TextMetadataTranslator(contentType);
                     case "json":
                         return new TextMetadataTranslator(contentType);
+                    case "vnd.openxmlformats-officedocument.wordprocessingml.document":
+                        return new WordMetadataTranslator();
                 }
                 break;
             case "text":
