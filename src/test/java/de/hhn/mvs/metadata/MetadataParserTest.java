@@ -57,8 +57,6 @@ public class MetadataParserTest {
     @Test
     public void testDocumentXML() throws Exception{
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.xml"));
-        String size = metadata.get("size");
-        assertTrue(size.equals("170 B") || size.equals("170 b"));
         assertEquals("application/xml", metadata.get("content-type"));
         assertFalse(metadata.isEmpty());
     }
@@ -66,8 +64,6 @@ public class MetadataParserTest {
     @Test
     public void testDocumentJSON() throws Exception{
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.json"));
-        String size = metadata.get("size");
-        assertTrue(size.equals("603 B") || size.equals("603 b"));
         assertEquals("windows-1252", metadata.get("encoding"));
         assertEquals("application/json", metadata.get("content-type"));
         assertFalse(metadata.isEmpty());
