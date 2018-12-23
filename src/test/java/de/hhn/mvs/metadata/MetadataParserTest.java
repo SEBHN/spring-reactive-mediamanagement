@@ -9,6 +9,7 @@ import org.springframework.util.ResourceUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test of {@link MetadataParser}
@@ -22,7 +23,8 @@ public class MetadataParserTest {
         assertEquals("Anthem", metadata.get("title"));
         assertEquals("00:01:03", metadata.get("duration"));
         assertEquals("44100", metadata.get("sample rate"));
-        assertEquals("441.6 kB", metadata.get("size"));
+        String size = metadata.get("size");
+        assertTrue(size.equals("441.6 kB") || size.equals("441,6 kB"));
         assertEquals("audio/mpeg", metadata.get("content-type"));
     }
 
@@ -33,7 +35,8 @@ public class MetadataParserTest {
         assertEquals("Manuel", metadata.get("author"));
         assertEquals("2018-12-06T20:51:08Z", metadata.get("created"));
         assertEquals("2018-12-06T20:51:08Z", metadata.get("modified"));
-        assertEquals("181.7 kB", metadata.get("size"));
+        String size = metadata.get("size");
+        assertTrue(size.equals("181.7 kB") || size.equals("181,7 kB"));
         assertEquals("de-CH", metadata.get("language"));
         assertEquals("false", metadata.get("encrypted"));
         assertEquals("1", metadata.get("pages"));
@@ -75,7 +78,8 @@ public class MetadataParserTest {
         assertEquals("Manuel", metadata.get("author"));
         assertEquals("2018-12-23T18:14:00Z", metadata.get("created"));
         assertEquals("2018-12-23T18:18:00Z", metadata.get("modified"));
-        assertEquals("11.6 kB", metadata.get("size"));
+        String size = metadata.get("size");
+        assertTrue(size.equals("11.6 kB") || size.equals("11,6 kB"));
         assertEquals("1", metadata.get("pages"));
         assertEquals("1", metadata.get("words"));
         assertEquals("7", metadata.get("characters"));
@@ -90,7 +94,8 @@ public class MetadataParserTest {
         assertEquals("Jürgen Schmidt", metadata.get("author"));
         assertEquals("2002-12-18T12:28:35", metadata.get("created"));
         assertEquals("2002-12-18T12:31:15", metadata.get("modified"));
-        assertEquals("6.6 kB", metadata.get("size"));
+        String size = metadata.get("size");
+        assertTrue(size.equals("6.6 kB") || size.equals("6,6 kB"));
         assertEquals("1", metadata.get("pages"));
         assertEquals("77", metadata.get("words"));
         assertEquals("511", metadata.get("characters"));
@@ -108,7 +113,8 @@ public class MetadataParserTest {
         assertEquals("1280", metadata.get("width"));
         assertEquals("1970-01-01T00:00:00Z", metadata.get("created"));
         assertEquals("1970-01-01T00:00:00Z", metadata.get("modified"));
-        assertEquals("1.0 MB", metadata.get("size"));
+        String size = metadata.get("size");
+        assertTrue(size.equals("1.0 MB") || size.equals("1,0 MB"));
         assertEquals("video/mp4", metadata.get("content-type"));
     }
 
@@ -118,7 +124,8 @@ public class MetadataParserTest {
         assertFalse(metadata.isEmpty());
         assertEquals("300", metadata.get("height"));
         assertEquals("300", metadata.get("width"));
-        assertEquals("49.9 kB", metadata.get("size"));
+        String size = metadata.get("size");
+        assertTrue(size.equals("49.9 kB") || size.equals("49,9 kB"));
         assertEquals("image/jpeg", metadata.get("content-type"));
     }
 
