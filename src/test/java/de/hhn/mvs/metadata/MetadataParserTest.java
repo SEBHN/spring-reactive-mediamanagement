@@ -64,7 +64,6 @@ public class MetadataParserTest {
     @Test
     public void testDocumentJSON() throws Exception{
         Map<String, String> metadata = MetadataParser.parse(getPathFromResource("sample.json"));
-        assertEquals("windows-1252", metadata.get("encoding"));
         assertEquals("application/json", metadata.get("content-type"));
         assertFalse(metadata.isEmpty());
     }
