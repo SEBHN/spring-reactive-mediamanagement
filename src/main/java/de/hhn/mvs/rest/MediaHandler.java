@@ -6,8 +6,8 @@ import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.database.MediaTemplateOperations;
+import de.hhn.mvs.metadata.MetadataParser;
 import de.hhn.mvs.model.*;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.Resource;
@@ -178,37 +178,39 @@ public class MediaHandler {
 
         return request.body(BodyExtractors.toMultipartData())
                 .flatMap(parts -> {
-
                     Map<String, Part> parameterFileMap = parts.toSingleValueMap();
                     if (!parameterFileMap.containsKey(fileKey)) {
                         return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
                     }
-
-                    FilePart part = (FilePart) parameterFileMap.get(fileKey);
-
-                    ObjectId fileId;
-                    try {
-                        Path upload = Files.createTempFile("mvs_", "_upload");
-                        part.transferTo(upload.toFile());
-                        fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename());
-                    } catch (IOException e) {
-                        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
-                    }
-
-                    String fileName = part.filename();
-                    String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
-                    String fileIdString = fileId.toString();
-
-                    Mono<Media> media = mediaRepo.findByIdAndOwnerId(id, userId);
-
-                    return ok()
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .body(
-                                    fromPublisher(
-                                            media.map(p -> new MediaImpl(p.getId(), fileName,
-                                                    fileIdString, fileExtension, p.getFilePath(), userId, p.getTags()))
-                                                    .flatMap(mediaRepo::save), Media.class));
+                    return handleUpload(id, userId, (FilePart) parameterFileMap.get(fileKey));
                 });
+    }
+
+    private Mono<? extends ServerResponse> handleUpload(String id, String userId, FilePart part) {
+        try {
+            Path upload = Files.createTempFile("mvs_", "_upload_" + part.filename());
+            Mono<Void> fileTransferedMono = part.transferTo(upload.toFile());
+            String fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename()).toString();
+            String fileName = part.filename();
+            String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+            Mono<Media> existingMediaMono = mediaRepo.findByIdAndOwnerId(id, userId);
+
+            return fileTransferedMono.then(
+                    ok()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(fromPublisher(
+                                    existingMediaMono.map(existingMedia -> {
+                                        existingMedia.setName(fileName);
+                                        existingMedia.setFileId(fileId);
+                                        existingMedia.setFileExtension(fileExtension);
+                                        existingMedia.setFileMetaData(MetadataParser.parse(upload));
+                                        return existingMedia;
+                                    }).flatMap(mediaRepo::save), Media.class))
+                            .switchIfEmpty(notFound().build())
+            );
+        } catch (IOException e) {
+            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fromObject(e.getMessage()));
+        }
     }
 
     Mono<ServerResponse> update(ServerRequest request) {

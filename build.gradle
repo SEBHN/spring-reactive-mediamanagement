@@ -34,4 +34,5 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
     testImplementation('io.projectreactor:reactor-test')
     // testImplementation('org.springframework.security:spring-security-test')
+    compile 'org.apache.tika:tika-parsers:1.20'
 }

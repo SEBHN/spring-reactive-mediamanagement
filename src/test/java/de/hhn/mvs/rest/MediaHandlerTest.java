@@ -4,9 +4,7 @@ import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.*;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -18,6 +16,7 @@ import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
@@ -42,9 +41,6 @@ public class MediaHandlerTest {
     private MediaCrudRepo mediaRepo;
     @Autowired
     private WebTestClient webClient;
-
-    @Rule
-    public TemporaryFolder folderRule = new TemporaryFolder();
 
     private Media catMedia;
     private Media cat2MediaInFolder;
@@ -464,7 +460,6 @@ public class MediaHandlerTest {
     }
 
     private FileSystemResource loadFileFromResource() throws Exception {
-        String fileName = "uploadTest.txt";
-        return new FileSystemResource(folderRule.newFile(fileName));
+        return new FileSystemResource(ResourceUtils.getFile("classpath:metadatasamplefiles/" + "sample.jpg"));
     }
 }
