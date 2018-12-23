@@ -262,13 +262,30 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
         String filePath = request.pathVariable("folderPath");
 
-        return mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
-                .flatMap(m -> {
-                    if (m.getDeletedCount() == 0)
-                        return notFound().build();
-                    else
-                        return noContent().build();
-                });
+
+        //TODO: delete gridFsFile in DB
+        return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(filePath))
+                .map(toDelete -> {
+                    gridFsTemplate.delete(new Query(GridFsCriteria.where("id").is(toDelete.getFileId())));
+                    return noContent().build(); // will not be returned to user
+                })
+                .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
+                .then(mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
+                        .flatMap(deleteResult -> {
+                            if (deleteResult.getDeletedCount() == 0) {
+                                return notFound().build();
+                            } else {
+                                return noContent().build();
+                            }
+                        }));
+
+//        return mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
+//                .flatMap(m -> {
+//                    if (m.getDeletedCount() == 0)
+//                        return notFound().build();
+//                    else
+//                        return noContent().build();
+//                });
     }
 
     /**
