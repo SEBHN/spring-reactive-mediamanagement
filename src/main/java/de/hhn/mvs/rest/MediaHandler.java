@@ -9,6 +9,7 @@ import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.database.MediaTemplateOperations;
 import de.hhn.mvs.metadata.MetadataParser;
 import de.hhn.mvs.model.*;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.Resource;
@@ -58,7 +59,7 @@ public class MediaHandler {
     @Autowired
     private MediaTemplateOperations mediaTemplateOps;
 
-    @Autowired
+
     public MediaHandler(GridFsTemplate gridFsTemplate) {
         this.gridFsTemplate = gridFsTemplate;
     }
@@ -223,7 +224,6 @@ public class MediaHandler {
         } else if (userId == null || userId.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
-
         Mono<Media> media = request.bodyToMono(Media.class);
 
         return mediaRepo
@@ -247,11 +247,11 @@ public class MediaHandler {
         } else if (userId == null || userId.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
-
         return mediaRepo
                 .findByIdAndOwnerId(id, userId)
                 .flatMap(existingMedia -> {
-                    gridFsTemplate.delete(new Query(GridFsCriteria.where("id").is(existingMedia.getFileId())));
+                    Query deleteFromGridFs = new Query(GridFsCriteria.where("_id").is(existingMedia.getFileId()));
+                    gridFsTemplate.delete(deleteFromGridFs);
                     return noContent().build(mediaRepo.delete(existingMedia));
                 })
                 .switchIfEmpty(notFound().build());
@@ -262,11 +262,9 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
         String filePath = request.pathVariable("folderPath");
 
-
-        //TODO: delete gridFsFile in DB
         return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(filePath))
                 .map(toDelete -> {
-                    gridFsTemplate.delete(new Query(GridFsCriteria.where("id").is(toDelete.getFileId())));
+                    gridFsTemplate.delete(new Query(Criteria.where("_id").is(toDelete.getFileId())));
                     return noContent().build(); // will not be returned to user
                 })
                 .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
@@ -278,14 +276,6 @@ public class MediaHandler {
                                 return noContent().build();
                             }
                         }));
-
-//        return mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
-//                .flatMap(m -> {
-//                    if (m.getDeletedCount() == 0)
-//                        return notFound().build();
-//                    else
-//                        return noContent().build();
-//                });
     }
 
     /**
