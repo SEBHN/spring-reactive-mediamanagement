@@ -1,7 +1,9 @@
 package de.hhn.mvs.rest;
 
+import java.util.UUID;
+
 import de.hhn.mvs.database.UserCrudRepo;
-import de.hhn.mvs.model.*;
+import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -11,13 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
-
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -25,6 +27,7 @@ import static org.junit.Assert.assertNotEquals;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
 public class UserHandlerTest {
 
     @Autowired
@@ -38,6 +41,7 @@ public class UserHandlerTest {
 
     @Before
     public void setUp() {
+        webClient = webClient.mutateWith(SecurityMockServerConfigurers.csrf());
         testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", "testPassword123", "Token123");
         testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", "testPassword987", "Token987");
 

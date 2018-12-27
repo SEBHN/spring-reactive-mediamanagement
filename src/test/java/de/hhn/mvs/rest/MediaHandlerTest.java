@@ -22,6 +22,8 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -36,6 +38,7 @@ import static org.junit.Assert.assertNotEquals;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
 public class MediaHandlerTest {
 
     private static final String ANY_USER_ID = "1";
@@ -86,6 +89,7 @@ public class MediaHandlerTest {
         dogMediaSave = mediaRepo.save(dogMedia);
         anotherDogMediaSave = mediaRepo.save(anotherDog);
 
+        webClient = webClient.mutateWith(SecurityMockServerConfigurers.csrf());
         savedMedia = new ArrayList<>(Arrays.asList(catMediaSave, cat2MediaInFolderMediaSave, cat3MediaInFolderMediaSave, kittenMediaInFolderMediaSave, dogMediaSave, anotherDogMediaSave));
     }
 
