@@ -1,9 +1,20 @@
 package de.hhn.mvs.rest;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
 import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
-import de.hhn.mvs.model.*;
+import de.hhn.mvs.model.FolderElements;
+import de.hhn.mvs.model.Media;
+import de.hhn.mvs.model.MediaImpl;
+import de.hhn.mvs.model.Subfolder;
+import de.hhn.mvs.model.Tag;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,14 +38,10 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 
 @RunWith(SpringRunner.class)
@@ -452,9 +459,7 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        String folder = "/";
-
-        webClient.get().uri("users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", cute.getName())
+        webClient.get().uri("/users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", cute.getName())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
@@ -471,9 +476,7 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        String folder = "/";
-
-        webClient.get().uri("users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", new Tag("CUTE").getName())
+        webClient.get().uri("/users/{userId}/folders/{folderPath}/taggedMedia?tag={tag1}", ANY_USER_ID, "/", new Tag("CUTE").getName())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(Media.class)
