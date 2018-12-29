@@ -4,7 +4,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.mongodb.client.result.DeleteResult;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.database.MediaTemplateOperations;
 import de.hhn.mvs.metadata.MetadataParser;
@@ -15,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsCriteria;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpStatus;
@@ -57,7 +57,7 @@ public class MediaHandler {
     @Autowired
     private MediaTemplateOperations mediaTemplateOps;
 
-    @Autowired
+
     public MediaHandler(GridFsTemplate gridFsTemplate) {
         this.gridFsTemplate = gridFsTemplate;
     }
@@ -222,7 +222,6 @@ public class MediaHandler {
         } else if (userId == null || userId.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
-
         Mono<Media> media = request.bodyToMono(Media.class);
 
         return mediaRepo
@@ -246,10 +245,13 @@ public class MediaHandler {
         } else if (userId == null || userId.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
-
         return mediaRepo
                 .findByIdAndOwnerId(id, userId)
-                .flatMap(existingMedia -> noContent().build(mediaRepo.delete(existingMedia)))
+                .flatMap(existingMedia -> {
+                    Query deleteFromGridFs = new Query(GridFsCriteria.where("_id").is(existingMedia.getFileId()));
+                    gridFsTemplate.delete(deleteFromGridFs);
+                    return noContent().build(mediaRepo.delete(existingMedia));
+                })
                 .switchIfEmpty(notFound().build());
     }
 
@@ -258,13 +260,20 @@ public class MediaHandler {
         String userId = request.pathVariable("userId");
         String filePath = request.pathVariable("folderPath");
 
-        return mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
-                .flatMap(m -> {
-                    if (m.getDeletedCount() == 0)
-                        return notFound().build();
-                    else
-                        return noContent().build();
-                });
+        return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(filePath))
+                .map(toDelete -> {
+                    gridFsTemplate.delete(new Query(Criteria.where("_id").is(toDelete.getFileId())));
+                    return noContent().build(); // will not be returned to user
+                })
+                .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
+                .then(mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
+                        .flatMap(deleteResult -> {
+                            if (deleteResult.getDeletedCount() == 0) {
+                                return notFound().build();
+                            } else {
+                                return noContent().build();
+                            }
+                        }));
     }
 
     /**

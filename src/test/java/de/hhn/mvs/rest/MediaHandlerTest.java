@@ -1,5 +1,7 @@
 package de.hhn.mvs.rest;
 
+import com.mongodb.client.gridfs.GridFSFindIterable;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.*;
 import org.junit.After;
@@ -10,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
@@ -24,11 +29,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
+
 
 @RunWith(SpringRunner.class)
+//@ContextConfiguration(classes = LocalHostM)
 @SpringBootTest
 @AutoConfigureWebTestClient
 public class MediaHandlerTest {
@@ -61,6 +69,10 @@ public class MediaHandlerTest {
 
     private List<Mono<Media>> savedMedia;
 
+    @Autowired
+    private GridFsTemplate gridFsTemplate;
+
+
     @Before
     public void setUp() {
         cats = new Tag("cats");
@@ -87,6 +99,7 @@ public class MediaHandlerTest {
 
     @After
     public void cleanUp() {
+        gridFsTemplate.delete(new Query());
         mediaRepo.deleteAll().block(); // ensure repo is cleaned up
     }
 
@@ -243,8 +256,75 @@ public class MediaHandlerTest {
                     assertNotEquals(null, returnedMedia);
                     assertEquals(resource.getFilename(), returnedMedia.getName());
                     assertNotEquals("", returnedMedia.getFileId());
+
+                    GridFSFindIterable filesInDb = gridFsTemplate.find(new Query());
+                    AtomicInteger integer = new AtomicInteger();
+                    filesInDb.forEach((Consumer<? super GridFSFile>) file -> {
+                        integer.addAndGet(1);
+                    });
+                    assertEquals(1, integer.get());
                 });
     }
+
+    @Test
+    public void deleteValidMediaWithFile() throws Exception {
+        MultiValueMap<String, Object> multipartDataMap = loadSampleFileIntoMap();
+        String mediaId = createMedia(dogMedia).getResponseBody().getId();
+        Media uploadedMedia = uploadMedia(mediaId, multipartDataMap).getResponseBody();
+        assertNotEquals(null, uploadedMedia.getId());
+
+        GridFSFile uploaded = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedMedia.getFileId())));
+        assertNotNull(uploaded);
+
+        webClient.delete()
+                .uri("/users/{userId}/media/{id}/", ANY_USER_ID, uploadedMedia.getId())
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody()
+                .consumeWith(empty -> {
+                    GridFSFile deleted = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedMedia.getFileId())));
+                    assertNull(deleted);
+                });
+    }
+
+
+    @Test
+    public void deleteValidFolderWithFiles() throws Exception {
+        Media cat = catMediaSave.block();
+        Media cat2InFolder = cat2MediaInFolderMediaSave.block();
+        Media cat3InFolder = cat3MediaInFolderMediaSave.block();
+        assertNotEquals(null, cat2InFolder.getId()); //check for one
+
+        MultiValueMap<String, Object> multipartDataMap = loadSampleFileIntoMap();
+
+        Media uploadedCatMedia = uploadMedia(cat.getId(), multipartDataMap).getResponseBody();
+        Media uploadedCat2Media = uploadMedia(cat2InFolder.getId(), multipartDataMap).getResponseBody();
+        Media uploadedCat3Media = uploadMedia(cat3InFolder.getId(), multipartDataMap).getResponseBody();
+        assertNotEquals(null, cat2InFolder.getId()); //check for one
+
+        GridFSFile uploadedCatFile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCatMedia.getFileId())));
+        assertNotNull(uploadedCatFile);
+        GridFSFile uploadedCat2File = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCat2Media.getFileId())));
+        assertNotNull(uploadedCat2File);
+        GridFSFile uploadedCat3File = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCat3Media.getFileId())));
+        assertNotNull(uploadedCat3File);
+
+
+        webClient.delete().uri("/users/{userId}/folders/{folderPath}", ANY_USER_ID, "catPictures")
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody()
+                .consumeWith(empty -> {
+                    GridFSFile catFile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCatMedia.getFileId())));
+                    assertNotNull(uploadedCatFile);
+                    GridFSFile cat2File = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCat2Media.getFileId())));
+                    assertNull(cat2File);
+                    GridFSFile cat3File = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCat3Media.getFileId())));
+                    assertNull(cat3File);
+                });
+
+    }
+
 
     @Test
     public void uploadInvalidFile_WithKeyNotFile() throws Exception {
@@ -443,7 +523,7 @@ public class MediaHandlerTest {
     }
 
     @Test
-    public void deleteFolder(){
+    public void deleteFolder() {
         Media cat = catMediaSave.block();
         Media cat2InFolder = cat2MediaInFolderMediaSave.block();
         Media cat3InFolder = cat3MediaInFolderMediaSave.block();
@@ -464,12 +544,29 @@ public class MediaHandlerTest {
                 .doesNotContain(cat2InFolder, cat3InFolder);
     }
 
+    private MultiValueMap<String, Object> loadSampleFileIntoMap() throws Exception {
+        FileSystemResource resource = loadFileFromResource();
+        MultiValueMap<String, Object> multipartDataMap = new LinkedMultiValueMap<>();
+        multipartDataMap.set("file", resource);
+        return multipartDataMap;
+    }
+
     private EntityExchangeResult<Media> createMedia(Media media) {
         return webClient.post().uri("/users/{userId}/media", ANY_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromObject(media))
                 .exchange()
                 .expectStatus().isCreated()
+                .expectBody(Media.class).returnResult();
+    }
+
+    private EntityExchangeResult<Media> uploadMedia(String mediaId, MultiValueMap<String, Object> multipartDataMap) {
+        return webClient.post()
+                .uri("/users/{userId}/media/{id}/upload/", ANY_USER_ID, mediaId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartDataMap))
+                .exchange()
+                .expectStatus().isOk()
                 .expectBody(Media.class).returnResult();
     }
 
