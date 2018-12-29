@@ -42,8 +42,8 @@ public class UserHandlerTest {
     @Before
     public void setUp() {
         webClient = webClient.mutateWith(SecurityMockServerConfigurers.csrf());
-        testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", "testPassword123", "Token123");
-        testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", "testPassword987", "Token987");
+        testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", "testPassword123", "Token123", "");
+        testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", "testPassword987", "Token987", "");
 
         userSave = userRepo.save(testUser);
     }

@@ -1,5 +1,7 @@
 package de.hhn.mvs.rest;
 
+import java.util.UUID;
+
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
@@ -13,8 +15,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
-
-import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
@@ -46,7 +46,7 @@ public class UserHandler {
                                 user.map(p ->
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
-                                            p.getEmail(), p.getPassword(), p.getToken());
+                                            p.getEmail(), p.getPassword(), p.getToken(), "");
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -72,7 +72,7 @@ public class UserHandler {
                                 fromPublisher(
                                         user.map(p ->
                                                 new UserImpl(userId, p.isAdmin(),
-                                                        p.getEmail(), p.getPassword(),  p.getToken()))
+                                                        p.getEmail(), p.getPassword(),  p.getToken(), ""))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }
