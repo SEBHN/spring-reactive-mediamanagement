@@ -30,6 +30,9 @@ public class MediaRouter {
                 .filter(mediaHandler.illegalStateToBadRequest())
                 .andRoute(PUT("/users/{userId}/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
                 .andRoute(DELETE("/users/{userId}/media/{id}").and(accept(ALL)), mediaHandler::delete)
-                .andRoute(GET("/users/{userId}/folders/{folderPath}/media").and(accept(APPLICATION_JSON)), mediaHandler::listFolderContent);
+                .andRoute(GET("/users/{userId}/folders/{folderPath}/media").and(accept(APPLICATION_JSON)), mediaHandler::listFolderContent)
+                .andRoute(GET("/users/{userId}/folders/{folderPath}/taggedMedia").and(accept(APPLICATION_JSON)), mediaHandler::listTaggedMedia)
+                .andRoute(DELETE("/users/{userId}/folders/{folderPath}").and(accept(ALL)), mediaHandler::deleteFolder)
+                ;
     }
 }

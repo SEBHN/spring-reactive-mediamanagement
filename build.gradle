@@ -18,11 +18,9 @@ apply plugin: 'io.spring.dependency-management'
 apply plugin: "jacoco"
 apply plugin: 'com.google.cloud.tools.appengine'
 
-
 group = 'de.hhn'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
-
 
 repositories {
     mavenCentral()
@@ -33,6 +31,7 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-security')
     implementation('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
     implementation('com.okta.spring:okta-spring-boot-starter:1.0.0')
+    compile('org.apache.tika:tika-parsers:1.20')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
     testImplementation('org.springframework.security:spring-security-test')
     testImplementation('io.projectreactor:reactor-test')
