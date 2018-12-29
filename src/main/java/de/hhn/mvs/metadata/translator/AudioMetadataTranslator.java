@@ -1,65 +1,44 @@
 package de.hhn.mvs.metadata.translator;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AudioMetadataTranslator implements MetadataTranslator {
 
-    private final Map<String, String> metadata;
-    private final Map<String, String> translations;
-    private Logger logger = LoggerFactory.getLogger(MetadataTranslator.class);
-
+    private final MetadataTranslatorHelper helper;
 
     AudioMetadataTranslator() {
-        metadata = new LinkedHashMap<>(); // use linked hash map to keep the following order
-        metadata.put("title", "");
-        metadata.put("artist", "");
-        metadata.put("album", "");
-        metadata.put("year", "");
-        metadata.put("track number", "");
-        metadata.put("genre", "");
-        metadata.put("duration", "");
-        metadata.put("sample rate", "");
-        metadata.put("channel type", "");
-        metadata.put("creator", "");
-        metadata.put("content-type", "");
+        helper = new MetadataTranslatorHelper(LoggerFactory.getLogger(getClass()));
+        helper.addMetadataOrder("title", "artist", "album", "year", "track number", "genre", "duration",
+                "sample rate", "channel type", "creator", "content-type");
 
-        translations = new HashMap<>();
-        translations.put("xmpDM:genre", "genre");
-        translations.put("creator", "creator");
-        translations.put("xmpDM:album", "album");
-        translations.put("xmpDM:artist", "artist");
-        translations.put("xmpDM:audioChannelType", "channel type");
-        translations.put("title", "title");
-        translations.put("samplerate", "sample rate");
-        translations.put("xmpDM:duration", "duration");
-        translations.put("Content-Type", "content-type");
-        translations.put("xmpDM:releaseDate","year");
-        translations.put("xmpDM:trackNumber","track number");
+        helper.addTranslation("xmpDM:genre", "genre");
+        helper.addTranslation("creator", "creator");
+        helper.addTranslation("xmpDM:album", "album");
+        helper.addTranslation("xmpDM:artist", "artist");
+        helper.addTranslation("xmpDM:audioChannelType", "channel type");
+        helper.addTranslation("title", "title");
+        helper.addTranslation("samplerate", "sample rate");
+        helper.addTranslation("xmpDM:duration", "duration");
+        helper.addTranslation("Content-Type", "content-type");
+        helper.addTranslation("xmpDM:releaseDate", "year");
+        helper.addTranslation("xmpDM:trackNumber", "track number");
     }
 
     @Override
     public MetadataTranslator collect(String metadataKey, String metadataValue) {
-        if (translations.containsKey(metadataKey)) {
-            String translatedKey = translations.get(metadataKey);
-            if (translatedKey.equals("duration")) {
-                metadata.put(translatedKey, Duration.toHumanFromMillis(metadataValue));
-            } else {
-                metadata.put(translatedKey, metadataValue);
-            }
-        }else{
-            logger.info("Ignored audio metadata property: " + metadataKey);
+        String translatedKey = helper.getTranslations().get(metadataKey);
+        if ("duration".equals(translatedKey)) {
+            helper.addMetadata(translatedKey, Duration.toHumanFromMillis(metadataValue));
+        } else {
+            helper.collect(metadataKey, metadataValue);
         }
         return this;
     }
 
     @Override
     public Map<String, String> getMetadata() {
-        return metadata;
+        return helper.getMetadata();
     }
-
 }

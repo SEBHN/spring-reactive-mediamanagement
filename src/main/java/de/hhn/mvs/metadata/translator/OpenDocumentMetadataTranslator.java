@@ -2,20 +2,23 @@ package de.hhn.mvs.metadata.translator;
 
 import java.util.Map;
 
-import org.apache.tika.metadata.TIFF;
 import org.slf4j.LoggerFactory;
 
-public class ImageMetadataTranslator implements MetadataTranslator {
+public class OpenDocumentMetadataTranslator implements MetadataTranslator {
 
     private final MetadataTranslatorHelper helper;
 
-    ImageMetadataTranslator() {
+    OpenDocumentMetadataTranslator() {
         helper = new MetadataTranslatorHelper(LoggerFactory.getLogger(getClass()));
-        helper.addMetadataOrder("width", "height", "modified", "created", "content-type");
-        helper.addTranslation(TIFF.IMAGE_LENGTH.getName(), "height");
-        helper.addTranslation(TIFF.IMAGE_WIDTH.getName(), "width");
-        helper.addTranslation("Creation-Date", "created");
+        helper.addMetadataOrder("creator", "author", "pages", "words", "characters", "modified", "created", "content-type");
+
+        helper.addTranslation("creator", "creator");
+        helper.addTranslation("meta:author", "author");
+        helper.addTranslation("nbPage", "pages");
+        helper.addTranslation("nbWord", "words");
+        helper.addTranslation("nbCharacter", "characters");
         helper.addTranslation("modified", "modified");
+        helper.addTranslation("meta:creation-date", "created");
         helper.addTranslation("Content-Type", "content-type");
     }
 
