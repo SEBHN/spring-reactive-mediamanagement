@@ -24,7 +24,7 @@ public class OktaHandler {
 
     public Mono<ServerResponse> register(ServerRequest request) {
         Mono<OktaUser> oktaUserMono = request.bodyToMono(User.class).map(user -> OktaUser.create(user));
-        Mono<ClientResponse> clientResponseMono = getAPIClient().post().uri("/users?activate=false").body(oktaUserMono, OktaUser.class).exchange();
+        Mono<ClientResponse> clientResponseMono = getAPIClient().post().uri("/users").body(oktaUserMono, OktaUser.class).exchange();
 
         return ServerResponseMapper.fromClientResponse(clientResponseMono, String.class);
     }
