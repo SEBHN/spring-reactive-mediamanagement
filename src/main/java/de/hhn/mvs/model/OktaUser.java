@@ -1,17 +1,25 @@
 package de.hhn.mvs.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public class OktaUser {
 
+    private static final String USERS_GROUP_ID = "00gijbm1beWSxYw7j0h7"; // group id of group "users", consider refactoring
+
     private Map<String, String> profile;
     private OktaCredentials credentials;
+    private List<String> groupIds;
+
 
     public OktaUser(){
         profile = new HashMap<>();
         credentials = new OktaCredentials();
+        groupIds = new ArrayList<>(1);
+        groupIds.add(USERS_GROUP_ID);
     }
 
     public static OktaUser create(User user){
@@ -20,6 +28,14 @@ public class OktaUser {
         oktaUser.setFirstName(user.getName());
         oktaUser.setCredentials(new OktaCredentials(user.getPassword()));
         return oktaUser;
+    }
+
+    public List<String> getGroupIds() {
+        return groupIds;
+    }
+
+    public void setGroupIds(List<String> groupIds) {
+        this.groupIds = groupIds;
     }
 
     public Map<String, String> getProfile() {
@@ -52,6 +68,7 @@ public class OktaUser {
         return "OktaUser{" +
                 "profile=" + profile +
                 ", credentials=" + credentials +
+                ", groupIds=" + groupIds +
                 '}';
     }
 
@@ -61,11 +78,12 @@ public class OktaUser {
         if (o == null || getClass() != o.getClass()) return false;
         OktaUser oktaUser = (OktaUser) o;
         return Objects.equals(profile, oktaUser.profile) &&
-                Objects.equals(credentials, oktaUser.credentials);
+                Objects.equals(credentials, oktaUser.credentials) &&
+                Objects.equals(groupIds, oktaUser.groupIds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(profile, credentials);
+        return Objects.hash(profile, credentials, groupIds);
     }
 }
