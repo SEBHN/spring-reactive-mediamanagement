@@ -3,18 +3,16 @@ package de.hhn.mvs;
 import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.POST;
-import static org.springframework.http.HttpMethod.PUT;
 
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
@@ -27,10 +25,10 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf()
-                .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
-                .and()
+                .disable()
                 .authorizeExchange()
                 .pathMatchers(POST, "/users/register").permitAll()
+                .anyExchange().authenticated()
                 .and()
                 .oauth2ResourceServer()
                 .jwt();
@@ -42,8 +40,8 @@ public class SecurityConfiguration {
     CorsConfigurationSource corsConfiguration() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.applyPermitDefaultValues();
-        corsConfig.addAllowedMethod(PUT);
-        corsConfig.addAllowedMethod(DELETE);
+        corsConfig.addAllowedMethod(HttpMethod.PUT);
+        corsConfig.addAllowedMethod(HttpMethod.DELETE);
         corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_LOCALHOST, FRONTEND_STAGING));
 
         UrlBasedCorsConfigurationSource source =
