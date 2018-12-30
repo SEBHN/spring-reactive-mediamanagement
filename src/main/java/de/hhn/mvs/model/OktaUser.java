@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 
 public class OktaUser {
-
-    private static final String USERS_GROUP_ID = "00gijbm1beWSxYw7j0h7"; // group id of group "users", consider refactoring
-
     private Map<String, String> profile;
     private OktaCredentials credentials;
     private List<String> groupIds;
@@ -19,14 +16,14 @@ public class OktaUser {
         profile = new HashMap<>();
         credentials = new OktaCredentials();
         groupIds = new ArrayList<>(1);
-        groupIds.add(USERS_GROUP_ID);
     }
 
-    public static OktaUser create(User user){
+    public static OktaUser create(User user, List<String> groupIds){
         OktaUser oktaUser = new OktaUser();
         oktaUser.setEmail(user.getEmail());
         oktaUser.setFirstName(user.getName());
         oktaUser.setCredentials(new OktaCredentials(user.getPassword()));
+        oktaUser.setGroupIds(groupIds);
         return oktaUser;
     }
 
