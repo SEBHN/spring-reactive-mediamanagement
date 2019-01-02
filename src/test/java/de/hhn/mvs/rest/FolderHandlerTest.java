@@ -29,8 +29,8 @@ import static org.junit.Assert.assertEquals;
 @WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
 public class FolderHandlerTest {
 
-    private static final String ANY_USER_ID = "1";
-    private static final String ANY_OTHER_USER_ID = "2";
+    private static final String ANY_USER_ID = "junit@hs-heilbronn.de";
+    private static final String ANY_OTHER_USER_ID = "anotherjunit@hs-heilbronn.de";
 
     @Autowired
     private MediaCrudRepo mediaRepo;
@@ -81,7 +81,7 @@ public class FolderHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         String oldPath = "/kitten/";//.replace("/", "%2F");
         webClient.put()
-                 .uri("/users/{userId}/folders/{oldPath}", ANY_USER_ID, oldPath)
+                 .uri("/users/folders/{oldPath}", oldPath)
                  .body(BodyInserters.fromObject("/catPictures/kitten/"))
                  .accept(MediaType.TEXT_PLAIN)
                  .exchange()
@@ -106,7 +106,7 @@ public class FolderHandlerTest {
         Media catMedia3 = cat3MediaInFolderMediaSave.block();
         String oldPath = "/catPictures/";
         webClient.put()
-                 .uri("/users/{userId}/folders/{oldPath}", ANY_USER_ID, oldPath)
+                 .uri("/users/folders/{oldPath}", oldPath)
                  .body(BodyInserters.fromObject("/catPics/"))
                  .accept(MediaType.TEXT_PLAIN)
                  .exchange()
