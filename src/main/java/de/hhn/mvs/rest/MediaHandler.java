@@ -230,10 +230,12 @@ public class MediaHandler {
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(
                                 fromPublisher(
-                                        media.map(p ->
-                                                new MediaImpl(id, p.getName(),
-                                                        p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags()))
-                                                .flatMap(mediaRepo::save), Media.class)))
+                                        media.map(p -> {
+                                            Media recreatedMedia = new MediaImpl(id, p.getName(),
+                                                    p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
+                                            recreatedMedia.setFileMetaData(p.getFileMetaData());
+                                            return recreatedMedia;
+                                        }).flatMap(mediaRepo::save), Media.class)))
                 .switchIfEmpty(notFound().build());
     }
 
