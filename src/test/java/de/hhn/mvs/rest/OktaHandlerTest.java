@@ -1,5 +1,6 @@
 package de.hhn.mvs.rest;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hhn.mvs.config.OktaConfig;
 import de.hhn.mvs.model.User;
@@ -22,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -72,8 +74,9 @@ public class OktaHandlerTest {
 
     private String getId(String jsonResponse) {
         try {
-            Map<String, Object> jsonToMap = new ObjectMapper().readValue(jsonResponse, Map.class);
-            return (String) jsonToMap.get("id");
+            Map<String, String> jsonToMap = new ObjectMapper().readValue(jsonResponse, new TypeReference<HashMap<String, Object>>() {
+            });
+            return jsonToMap.get("id");
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.getMessage());
