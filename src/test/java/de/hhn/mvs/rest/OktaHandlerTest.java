@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -48,7 +49,8 @@ public class OktaHandlerTest {
 
     @Before
     public void setUp() {
-        user = new UserImpl("anId", false, "oktahandlertest@junit.org", "superSecret123!", "", "OktaHandlerTest");
+        String randomEmail = "oktaHandler" + new Random().nextInt() + "test@junit.org";
+        user = new UserImpl("anId", false, randomEmail, "superSecret123!", "", "OktaHandlerTest");
     }
 
     @After
@@ -98,8 +100,12 @@ public class OktaHandlerTest {
     }
 
     private WebClient getAPIClient() {
-        return WebClient.builder().baseUrl(config.getApiUrl()).defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-                .defaultHeader(ACCEPT, APPLICATION_JSON_VALUE).defaultHeader("Authorization", "SSWS " + config.getApiKey())
+        return WebClient
+                .builder()
+                .baseUrl(config.getApiUrl())
+                .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .defaultHeader(ACCEPT, APPLICATION_JSON_VALUE)
+                .defaultHeader("Authorization", "SSWS " + config.getApiKey())
                 .build();
     }
 }
