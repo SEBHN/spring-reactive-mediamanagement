@@ -1,10 +1,9 @@
 package de.hhn.mvs.rest;
 
-import java.util.List;
-
+import de.hhn.mvs.config.OktaConfig;
 import de.hhn.mvs.model.OktaUser;
 import de.hhn.mvs.model.User;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,15 +18,15 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Component
 public class OktaHandler {
 
-    @Value("${okta.api_key}")
-    private String oktaApiKey;
+    private OktaConfig config;
 
-    @Value("${okta.user.groupIds}")
-    private List<String> userGroupIds;
-
+    @Autowired
+    public OktaHandler(OktaConfig config) {
+        this.config = config;
+    }
 
     public Mono<ServerResponse> register(ServerRequest request) {
-        Mono<OktaUser> oktaUserMono = request.bodyToMono(User.class).map(user -> OktaUser.create(user, userGroupIds));
+        Mono<OktaUser> oktaUserMono = request.bodyToMono(User.class).map(user -> OktaUser.create(user, config.getUserGroupIds()));
         Mono<ClientResponse> clientResponseMono = getAPIClient().post().uri("/users").body(oktaUserMono, OktaUser.class).exchange();
 
         return ServerResponseMapper.fromClientResponse(clientResponseMono, String.class);
@@ -36,10 +35,10 @@ public class OktaHandler {
     private WebClient getAPIClient(){
         return WebClient
                 .builder()
-                .baseUrl("https://dev-332680.oktapreview.com/api/v1")
+                .baseUrl(config.getApiUrl())
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .defaultHeader(ACCEPT, APPLICATION_JSON_VALUE)
-                .defaultHeader("Authorization", "SSWS " + oktaApiKey)
+                .defaultHeader("Authorization", "SSWS " + config.getApiKey())
                 .build();
     }
 }
