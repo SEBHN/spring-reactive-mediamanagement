@@ -1,29 +1,31 @@
 package de.hhn.mvs.model;
 
+import java.util.Objects;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Objects;
-
 @Document
-public final class UserImpl implements User{
+public final class UserImpl implements User {
     @Id
     private String id;
     private boolean admin;
     private String email;
     private String password;
     private String token;
+    private String name;
 
-    public UserImpl(){
+    public UserImpl() {
 
     }
 
-    public UserImpl(String id, boolean admin, String email, String password, String token){
+    public UserImpl(String id, boolean admin, String email, String password, String token, String name) {
         this.id = id;
         this.admin = admin;
         this.email = email;
         this.password = password;
         this.token = token;
+        this.name = name;
     }
 
     @Override
@@ -47,6 +49,16 @@ public final class UserImpl implements User{
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
     public String getPassword() {
         return password;
     }
@@ -67,9 +79,10 @@ public final class UserImpl implements User{
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "User{" +
                 "id='" + id + "\'" +
+                "name='" + name + "\'" +
                 "admin='" + admin + "\'" +
                 "email='" + email + "\'" +
                 "password='" + password + "\'" +
@@ -78,7 +91,7 @@ public final class UserImpl implements User{
     }
 
     @Override
-    public boolean equals(Object o){
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserImpl user = (UserImpl) o;
@@ -86,12 +99,12 @@ public final class UserImpl implements User{
                 Objects.equals(admin, user.admin) &&
                 Objects.equals(email, user.email) &&
                 Objects.equals(password, user.password) &&
-                Objects.equals(token, user.token);
+                Objects.equals(token, user.token) &&
+                Objects.equals(name, user.name);
     }
 
     @Override
-    public int hashCode(){
-        return Objects.hash(id, admin, email, password, token);
+    public int hashCode() {
+        return Objects.hash(id, admin, email, password, token, name);
     }
-
 }
