@@ -31,7 +31,9 @@ test:
       junit: build/test-results/test/TEST-*.xml
     paths:
       - build/libs/*.jar
-    expire_in: 1 hrs
+      - build/reports/jacoco/test/html/
+
+    expire_in: 1 day
 
 deploy_production:
   stage: deploy
