@@ -1,5 +1,9 @@
 package de.hhn.mvs.rest;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.UUID;
+
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
@@ -16,12 +20,12 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.*;
+import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
+import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
 public class UserHandler {
@@ -46,7 +50,8 @@ public class UserHandler {
                 .body(fromPublisher(userMono.map(user ->
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(), user.isAdmin(), user.getEmail(),
-                                        user.getPassword(), user.getToken(), user.getName(), user.getRoles());
+                                        user.getPassword(), user.getToken(), user.getName(), new ArrayList<>(Arrays.asList("ROLE_USER")));
+                                    createdUser.encodePassword();
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
