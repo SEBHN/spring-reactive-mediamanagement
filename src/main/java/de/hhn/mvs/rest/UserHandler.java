@@ -3,6 +3,7 @@ package de.hhn.mvs.rest;
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
+import reactor.core.publisher.Mono;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatus;
@@ -12,16 +13,11 @@ import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Mono;
-
 import java.util.UUID;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.web.reactive.function.BodyInserters.fromObject;
-import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.http.MediaType.*;
+import static org.springframework.web.reactive.function.BodyInserters.*;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
 public class UserHandler {
@@ -37,16 +33,14 @@ public class UserHandler {
     }
 
     Mono<ServerResponse> create(ServerRequest request) {
-        Mono<User> user = request.bodyToMono(User.class);
+        Mono<User> userMono = request.bodyToMono(User.class);
         UUID id = UUID.randomUUID();
         return ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(
-                        fromPublisher(
-                                user.map(p ->
+                .body(fromPublisher(userMono.map(user ->
                                 {
-                                    UserImpl createdUser = new UserImpl(id.toString(), p.isAdmin(),
-                                            p.getEmail(), p.getPassword(), p.getToken());
+                                    UserImpl createdUser = new UserImpl(id.toString(), user.isAdmin(), user.getEmail(),
+                                        user.getPassword(), user.getToken(), user.getName());
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
@@ -62,17 +56,15 @@ public class UserHandler {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
 
-        Mono<User> user = request.bodyToMono(User.class);
+        Mono<User> userMono = request.bodyToMono(User.class);
 
         return userRepo
                 .findById(userId)
                 .flatMap(existingMedia -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                fromPublisher(
-                                        user.map(p ->
-                                                new UserImpl(userId, p.isAdmin(),
-                                                        p.getEmail(), p.getPassword(),  p.getToken()))
+                        .body(fromPublisher(userMono.map(
+                            user -> new UserImpl(userId, user.isAdmin(), user.getEmail(), user.getPassword(),
+                                user.getToken(), user.getName()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }

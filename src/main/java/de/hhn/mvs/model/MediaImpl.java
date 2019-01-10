@@ -2,8 +2,11 @@ package de.hhn.mvs.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Document
 public final class MediaImpl implements Media {
@@ -97,16 +100,6 @@ public final class MediaImpl implements Media {
     @Override
     public void setTags(List<Tag> tags) {
         this.tags = tags;
-    }
-
-    @Override
-    public boolean addTag(Tag tag) {
-        return this.tags.add(tag);
-    }
-
-    @Override
-    public boolean removeTag(Tag tag) {
-        return this.tags.remove(tag);
     }
 
     @Override

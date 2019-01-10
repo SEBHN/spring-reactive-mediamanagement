@@ -1,5 +1,18 @@
 package de.hhn.mvs.rest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
@@ -7,7 +20,11 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.database.MediaTemplateOperations;
 import de.hhn.mvs.metadata.MetadataParser;
-import de.hhn.mvs.model.*;
+import de.hhn.mvs.model.FolderElements;
+import de.hhn.mvs.model.Media;
+import de.hhn.mvs.model.MediaImpl;
+import de.hhn.mvs.model.Subfolder;
+import de.hhn.mvs.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.Resource;
@@ -31,18 +48,14 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import static de.hhn.mvs.rest.FolderUtils.SLASH;
 import static de.hhn.mvs.rest.FolderUtils.parseFolderPathFormat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
-import static org.springframework.web.reactive.function.server.ServerResponse.*;
+import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
+import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
 public class MediaHandler {
@@ -57,33 +70,35 @@ public class MediaHandler {
     @Autowired
     private MediaTemplateOperations mediaTemplateOps;
 
-
     public MediaHandler(GridFsTemplate gridFsTemplate) {
         this.gridFsTemplate = gridFsTemplate;
     }
 
     Mono<ServerResponse> get(ServerRequest request) {
         String mediaId = request.pathVariable("id");
-        String userId = request.pathVariable("userId");
-        return mediaRepo.findByIdAndOwnerId(mediaId, userId)
-                .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
-                .switchIfEmpty(notFound().build());
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name -> mediaRepo.findByIdAndOwnerId(mediaId, name)
+                        .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
+                        .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> list(ServerRequest request) {
-        String userId = request.pathVariable("userId");
-
-        return ok().contentType(MediaType.APPLICATION_JSON)
-                .body(mediaRepo.findAllByOwnerId(userId), Media.class);
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name -> ok().contentType(MediaType.APPLICATION_JSON)
+                        .body(mediaRepo.findAllByOwnerId(name), Media.class)
+                        .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> listFolderContent(ServerRequest request) {
         String folderPath = request.pathVariable("folderPath");
-        String userId = request.pathVariable("userId");
         String parsedfolderPath = parseFolderPathFormat(folderPath);
 
-        Mono<List<Media>> monoMedias = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedfolderPath)
-                .collectList();
+        Mono<List<Media>> monoMedias = request.principal()
+                .map(Principal::getName)
+                .flatMap(name -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parsedfolderPath)
+                        .collectList());
         Mono<FolderElements> folderElementsMono =
                 monoMedias
                         .map(media -> {
@@ -112,7 +127,7 @@ public class MediaHandler {
     Mono<ServerResponse> listTaggedMedia(ServerRequest request) {
         String folderPath = request.pathVariable("folderPath");
         String parsedFolderPath = parseFolderPathFormat(folderPath);
-        String userId = request.pathVariable("userId");
+        Mono<String> principalNameMono = request.principal().map(Principal::getName);
         List<Tag> tagList = new ArrayList<>();
         MultiValueMap<String, String> params = request.queryParams();
 
@@ -124,67 +139,70 @@ public class MediaHandler {
 
         Flux<Media> media;
         if (tagList.isEmpty())
-            media = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parsedFolderPath);
+            media = principalNameMono.flatMapMany(name -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parsedFolderPath));
         else {
             String preparedRegex = "^" + parsedFolderPath;
-            media = mediaTemplateOps.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll_notCaseSensitive(userId, preparedRegex, tagList);
+            media = principalNameMono.flatMapMany(name -> mediaTemplateOps.findAllByOwnerIdAndFilePathRegexAndTagsContainingAll_notCaseSensitive(name, preparedRegex, tagList));
         }
         return ok().contentType(APPLICATION_JSON).body(fromPublisher(media, Media.class));
     }
 
-
     Mono<ServerResponse> create(ServerRequest request) {
-        Mono<Media> media = request.bodyToMono(Media.class);
+        Mono<Media> mediaMono = request.bodyToMono(Media.class);
         UUID id = UUID.randomUUID();
+
+        Mono<String> principalNameMono = request.principal().map(Principal::getName);
+        Mono<MediaImpl> createdMediaMono = principalNameMono.flatMap(name -> mediaMono.map(media -> createValidatedMediaCopy(id, name, media)));
+
         return ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(
-                        fromPublisher(
-                                media.map(p ->
-                                {
-                                    String userId = request.pathVariable("userId");
-                                    MediaImpl createdMedia = new MediaImpl(id.toString(), p.getName(),
-                                            p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
-                                    createdMedia.validate();
-                                    return createdMedia;
-                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                        .flatMap(mediaRepo::save), Media.class)
-
+                .body(fromPublisher(createdMediaMono
+                        .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                        .flatMap(mediaRepo::save), Media.class)
                 )
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
+    private MediaImpl createValidatedMediaCopy(UUID id, String name, Media media) {
+        MediaImpl createdMedia = new MediaImpl(id.toString(), media.getName(),
+                media.getFileId(), media.getFileExtension(), parseFolderPathFormat(media.getFilePath()), name, media.getTags());
+        createdMedia.validate();
+        return createdMedia;
+    }
+
     Mono<ServerResponse> download(ServerRequest request) {
         String id = request.pathVariable("id");
-        String userId = request.pathVariable("userId");
-        return mediaRepo
-                .findByIdAndOwnerId(id, userId)
-                .flatMap(existingMedia -> {
-                    GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
-                    if (gridFsfile == null) {
-                        return notFound().build();
-                    }
 
-                    Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
-                    return ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromObject(rs));
-                })
-                .switchIfEmpty(notFound().build());
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name -> mediaRepo
+                        .findByIdAndOwnerId(id, name)
+                        .flatMap(existingMedia -> {
+                            GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
+                            if (gridFsfile == null) {
+                                return notFound().build();
+                            }
+                            Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
+                            return ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromObject(rs));
+                        })
+                        .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> upload(ServerRequest request) {
         String id = request.pathVariable("id");
-        String userId = request.pathVariable("userId");
         String fileKey = "file";
 
-        return request.body(BodyExtractors.toMultipartData())
-                .flatMap(parts -> {
-                    Map<String, Part> parameterFileMap = parts.toSingleValueMap();
-                    if (!parameterFileMap.containsKey(fileKey)) {
-                        return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
-                    }
-                    return handleUpload(id, userId, (FilePart) parameterFileMap.get(fileKey));
-                });
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name -> request.body(BodyExtractors.toMultipartData())
+                        .flatMap(parts -> {
+                            Map<String, Part> parameterFileMap = parts.toSingleValueMap();
+                            if (!parameterFileMap.containsKey(fileKey)) {
+                                return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
+                            }
+                            return handleUpload(id, name, (FilePart) parameterFileMap.get(fileKey));
+                        }));
     }
 
     private Mono<? extends ServerResponse> handleUpload(String id, String userId, FilePart part) {
@@ -194,6 +212,7 @@ public class MediaHandler {
             String fileId = gridFsTemplate.store(Files.newInputStream(upload), part.filename()).toString();
             String fileName = part.filename();
             String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+
             Mono<Media> existingMediaMono = mediaRepo.findByIdAndOwnerId(id, userId);
 
             return fileTransferedMono.then(
@@ -216,66 +235,63 @@ public class MediaHandler {
 
     Mono<ServerResponse> update(ServerRequest request) {
         String id = request.pathVariable("id");
-        String userId = request.pathVariable("userId");
         if (id == null || id.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("Id must not be empty"));
-        } else if (userId == null || userId.isEmpty()) {
-            return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
         Mono<Media> media = request.bodyToMono(Media.class);
 
-        return mediaRepo
-                .findByIdAndOwnerId(id, userId)
-                .flatMap(existingMedia -> ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                fromPublisher(
-                                        media.map(p -> {
-                                            Media recreatedMedia = new MediaImpl(id, p.getName(),
-                                                    p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
-                                            recreatedMedia.setFileMetaData(p.getFileMetaData());
-                                            return recreatedMedia;
-                                        }).flatMap(mediaRepo::save), Media.class)))
-                .switchIfEmpty(notFound().build());
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name ->
+                        mediaRepo.findByIdAndOwnerId(id, name)
+                                .flatMap(existingMedia ->
+                                        ok().contentType(MediaType.APPLICATION_JSON).body(
+                                                fromPublisher(media.map(p -> {
+                                                    Media recreatedMedia = new MediaImpl(id, p.getName(),
+                                                            p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), userId, p.getTags());
+                                                    recreatedMedia.setFileMetaData(p.getFileMetaData());
+                                                    return recreatedMedia;
+                                                }).flatMap(mediaRepo::save), Media.class)))
+                                .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> delete(ServerRequest request) {
         String id = request.pathVariable("id");
-        String userId = request.pathVariable("userId");
         if (id == null || id.isEmpty()) {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("Id must not be empty"));
-        } else if (userId == null || userId.isEmpty()) {
-            return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
-        return mediaRepo
-                .findByIdAndOwnerId(id, userId)
-                .flatMap(existingMedia -> {
-                    Query deleteFromGridFs = new Query(GridFsCriteria.where("_id").is(existingMedia.getFileId()));
-                    gridFsTemplate.delete(deleteFromGridFs);
-                    return noContent().build(mediaRepo.delete(existingMedia));
-                })
-                .switchIfEmpty(notFound().build());
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name ->
+                        mediaRepo.findByIdAndOwnerId(id, name)
+                                .flatMap(existingMedia -> {
+                                    Query deleteFromGridFs = new Query(GridFsCriteria.where("_id").is(existingMedia.getFileId()));
+                                    gridFsTemplate.delete(deleteFromGridFs);
+                                    return noContent().build(mediaRepo.delete(existingMedia));
+                                })
+                                .switchIfEmpty(notFound().build()));
     }
 
-
     Mono<ServerResponse> deleteFolder(ServerRequest request) {
-        String userId = request.pathVariable("userId");
         String filePath = request.pathVariable("folderPath");
 
-        return mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(filePath))
-                .map(toDelete -> {
-                    gridFsTemplate.delete(new Query(Criteria.where("_id").is(toDelete.getFileId())));
-                    return noContent().build(); // will not be returned to user
-                })
-                .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
-                .then(mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(userId, parseFolderPathFormat(filePath))
-                        .flatMap(deleteResult -> {
-                            if (deleteResult.getDeletedCount() == 0) {
-                                return notFound().build();
-                            } else {
-                                return noContent().build();
-                            }
-                        }));
+        return request.principal()
+                .map(Principal::getName)
+                .flatMap(name ->
+                        mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parseFolderPathFormat(filePath))
+                                .map(toDelete -> {
+                                    gridFsTemplate.delete(new Query(Criteria.where("_id").is(toDelete.getFileId())));
+                                    return noContent().build(); // will not be returned to user
+                                })
+                                .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
+                                .then(mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(name, parseFolderPathFormat(filePath))
+                                        .flatMap(deleteResult -> {
+                                            if (deleteResult.getDeletedCount() == 0) {
+                                                return notFound().build();
+                                            } else {
+                                                return noContent().build();
+                                            }
+                                        })));
     }
 
     /**
