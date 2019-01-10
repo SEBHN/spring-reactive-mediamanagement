@@ -38,7 +38,10 @@ public class UserHandler {
     Mono<ServerResponse> get(ServerRequest request) {
         String userId = request.pathVariable("userId");
         return userRepo.findById(userId)
-                .flatMap(user -> ok().contentType(APPLICATION_JSON).body(fromObject(user)))
+                .flatMap(user -> {
+                    user.setPassword(null);
+                    return ok().contentType(APPLICATION_JSON).body(fromObject(user));
+                })
                 .switchIfEmpty(notFound().build());
     }
 
