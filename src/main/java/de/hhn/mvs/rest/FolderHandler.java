@@ -1,5 +1,7 @@
 package de.hhn.mvs.rest;
 
+import java.security.Principal;
+
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +23,16 @@ public class FolderHandler {
     private MediaCrudRepo mediaRepo;
 
     Mono<ServerResponse> updateFolder(ServerRequest request) {
-        String userId = request.pathVariable("userId");
         String oldPath = request.pathVariable("oldPath");
         Mono<String> newPath = request.bodyToMono(String.class);
 
         Flux<String> paths = Flux.from(newPath);
-        Flux<Media> renamedMedia1 = paths
+        Mono<String> principalNameMono = request.principal().map(Principal::getName);
+
+        Flux<Media> renamedMedia1 = principalNameMono.flatMapMany(name -> paths
                 .flatMap(newPathString ->
                 {
-                    Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(userId, parseFolderPathFormat(oldPath));
+                    Flux<Media> mediaFlux = mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parseFolderPathFormat(oldPath));
                     return mediaFlux.flatMap(media ->
                     {
                         String pathOfOldMedium = media.getFilePath();
@@ -40,7 +43,7 @@ public class FolderHandler {
                     })
                                     .onErrorMap(error ->
                                             new Exception("Error in Mapping to flux " + error.getMessage()));
-                });
+                }));
 
         return ok().body(renamedMedia1
                         .onErrorMap(Exception.class, e ->

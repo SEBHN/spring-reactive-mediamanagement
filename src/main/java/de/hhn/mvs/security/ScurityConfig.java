@@ -6,10 +6,12 @@ import de.hhn.mvs.security.bearer.BearerTokenReactiveAuthenticationManager;
 import de.hhn.mvs.security.bearer.ServerHttpBearerAuthenticationConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -28,7 +30,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.function.Function;
 
+
 @EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
 public class ScurityConfig {
 
     private UserCrudRepo users;
@@ -168,7 +172,6 @@ public class ScurityConfig {
 
         return bearerAuthenticationFilter;
     }
-
 
 
 }

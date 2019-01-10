@@ -14,9 +14,17 @@ public interface User extends UserDetails {
 
     void setEmail(String email);
 
+    String getName();
+
+    void setName(String name);
+
     String getPassword();
 
     void setPassword(String password);
+
+    boolean isAdmin();
+
+    String getToken();
 
     List<String> getRoles();
 

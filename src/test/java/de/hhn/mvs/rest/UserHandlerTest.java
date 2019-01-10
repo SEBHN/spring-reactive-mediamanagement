@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -29,7 +30,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-@WithMockUser(username = "example@domain.tld", password = "testPassword123", roles = "USER")
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!", roles = "USER")
 public class UserHandlerTest {
 
     @Autowired
@@ -48,6 +49,7 @@ public class UserHandlerTest {
 
     @Before
     public void setUp() {
+
         userRepo.deleteAll().block();
 
         PasswordEncoder enc = PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -61,10 +63,14 @@ public class UserHandlerTest {
                 .build();
         List<String> roles = new ArrayList<>();
         roles.add("ROLE_USER");
-        // TODO: Roles need to be replaced with List<String> .. problem is a deserialisation from jackson of the List
 
-        testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld", enc.encode("testPassword123"),  roles);
-        testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", enc.encode("testPassword987"),  roles);
+        //TODO: maybe check here if spring security or okta
+        webClient = webClient.mutateWith(SecurityMockServerConfigurers.csrf());
+
+
+        testUser = new UserImpl(UUID.randomUUID().toString(), false, "example@domain.tld", "testPassword123", "Token123", "",roles);
+        testUser2 = new UserImpl(UUID.randomUUID().toString(), true, "example2@domain.tld", "testPassword987", "Token987", "",roles);
+
 
         userSave = userRepo.save(testUser);
     }

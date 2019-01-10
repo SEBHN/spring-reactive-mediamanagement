@@ -4,6 +4,7 @@ import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -38,15 +39,20 @@ public class UserHandler {
     }
 
     Mono<ServerResponse> create(ServerRequest request) {
-        Mono<User> user = request.bodyToMono(User.class);
+        Mono<User> userMono = request.bodyToMono(User.class);
         UUID id = UUID.randomUUID();
         return ServerResponse.status(HttpStatus.CREATED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(
-                        fromPublisher(
-                                user.map(p ->
-                                        (User) new UserImpl(id.toString(),
-                                                p.getEmail(), encoder.encode(p.getPassword()), p.getRoles())).flatMap(userRepo::save), User.class)
+                .body(fromPublisher(userMono.map(user ->
+                                {
+                                    UserImpl createdUser = new UserImpl(id.toString(), user.isAdmin(), user.getEmail(),
+                                        user.getPassword(), user.getToken(), user.getName(), user.getRoles());
+                                    return createdUser;
+                                }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                                        .flatMap(userRepo::save), User.class)
+
+
                 )
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
@@ -57,17 +63,15 @@ public class UserHandler {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("userId must not be empty"));
         }
 
-        Mono<User> user = request.bodyToMono(User.class);
+        Mono<User> userMono = request.bodyToMono(User.class);
 
         return userRepo
                 .findById(userId)
                 .flatMap(existingMedia -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(
-                                fromPublisher(
-                                        user.map(p ->
-                                                new UserImpl(userId,
-                                                        p.getEmail(), encoder.encode(p.getPassword()), p.getRoles()))
+                        .body(fromPublisher(userMono.map(
+                            user -> new UserImpl(userId, user.isAdmin(), user.getEmail(), user.getPassword(),
+                                user.getToken(), user.getName(), user.getRoles()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }

@@ -1,6 +1,8 @@
 buildscript {
     ext {
-        springBootVersion = '2.0.6.RELEASE'
+
+        springBootVersion = '2.1.1.RELEASE'
+
     }
     repositories {
         mavenCentral()
@@ -26,14 +28,19 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
     implementation('org.springframework.boot:spring-boot-starter-webflux')
     implementation('org.springframework.boot:spring-boot-starter-security')
+
     testImplementation('org.springframework.security:spring-security-test')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
+
     implementation('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
+    implementation('com.okta.spring:okta-spring-boot-starter:1.0.0')
+    compile('org.apache.tika:tika-parsers:1.20')
+    annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
     testImplementation('io.projectreactor:reactor-test')
     implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '6.4.1'
     compile 'org.apache.tika:tika-parsers:1.20'
+
 }

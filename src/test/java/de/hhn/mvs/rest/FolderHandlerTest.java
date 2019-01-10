@@ -1,8 +1,5 @@
 package de.hhn.mvs.rest;
 
-import java.util.List;
-import java.util.UUID;
-
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
@@ -15,21 +12,25 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-@WithMockUser(username = "example@domain.tld", password = "testPassword123", roles = "USER")
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!", roles = "USER")
 public class FolderHandlerTest {
 
-    private static final String ANY_USER_ID = "1";
-    private static final String ANY_OTHER_USER_ID = "2";
+    private static final String ANY_USER_ID = "junit@hs-heilbronn.de";
+    private static final String ANY_OTHER_USER_ID = "anotherjunit@hs-heilbronn.de";
 
     @Autowired
     private MediaCrudRepo mediaRepo;
@@ -52,6 +53,7 @@ public class FolderHandlerTest {
 
     @Before
     public void setUp() {
+        webClient = webClient.mutateWith(SecurityMockServerConfigurers.csrf());
         catMedia = new MediaImpl(UUID.randomUUID().toString(), "My fabulous cat", "123462345", ".jpg", "/", ANY_USER_ID);
         cat2MediaInFolder = new MediaImpl(UUID.randomUUID().toString(), "Cute cate", "123", ".png", "/catPictures/", ANY_USER_ID);
         cat3MediaInFolder = new MediaImpl(UUID.randomUUID().toString(), "Cute cat", "987", ".png", "/catPictures/", ANY_USER_ID);
@@ -79,7 +81,7 @@ public class FolderHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         String oldPath = "/kitten/";//.replace("/", "%2F");
         webClient.put()
-                 .uri("/users/{userId}/folders/{oldPath}", ANY_USER_ID, oldPath)
+                 .uri("/users/folders/{oldPath}", oldPath)
                  .body(BodyInserters.fromObject("/catPictures/kitten/"))
                  .accept(MediaType.TEXT_PLAIN)
                  .exchange()
@@ -104,7 +106,7 @@ public class FolderHandlerTest {
         Media catMedia3 = cat3MediaInFolderMediaSave.block();
         String oldPath = "/catPictures/";
         webClient.put()
-                 .uri("/users/{userId}/folders/{oldPath}", ANY_USER_ID, oldPath)
+                 .uri("/users/folders/{oldPath}", oldPath)
                  .body(BodyInserters.fromObject("/catPics/"))
                  .accept(MediaType.TEXT_PLAIN)
                  .exchange()
