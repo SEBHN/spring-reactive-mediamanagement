@@ -6,6 +6,7 @@ import de.hhn.mvs.security.bearer.BearerTokenReactiveAuthenticationManager;
 import de.hhn.mvs.security.bearer.ServerHttpBearerAuthenticationConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -90,6 +91,8 @@ public class ScurityConfig {
             .formLogin().loginPage("/login");
 **/
         http.csrf().disable()
+                .authorizeExchange().pathMatchers(HttpMethod.POST, "/users").permitAll()
+                .and()
                 .authorizeExchange()
                 .pathMatchers("/**")
                 .authenticated()
@@ -107,7 +110,6 @@ public class ScurityConfig {
 
         return authentication
                 .map(a -> context.getVariables().get("userId").equals(a.getName()))
-
                 .map(AuthorizationDecision::new);//granted -> new AuthorizationDecision(granted)
 
     }

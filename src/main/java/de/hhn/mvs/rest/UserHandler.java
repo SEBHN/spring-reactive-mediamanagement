@@ -45,11 +45,8 @@ public class UserHandler {
                 .body(
                         fromPublisher(
                                 user.map(p ->
-                                {
-                                    UserImpl createdUser = new UserImpl(id.toString(),
-                                            p.getEmail(), p.getPassword(), p.getRoles());
-                                    return createdUser;
-                                }).flatMap(userRepo::save), User.class)
+                                        (User) new UserImpl(id.toString(),
+                                                p.getEmail(), encoder.encode(p.getPassword()), p.getRoles())).flatMap(userRepo::save), User.class)
                 )
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
@@ -70,7 +67,7 @@ public class UserHandler {
                                 fromPublisher(
                                         user.map(p ->
                                                 new UserImpl(userId,
-                                                        p.getEmail(), p.getPassword(), p.getRoles()))
+                                                        p.getEmail(), encoder.encode(p.getPassword()), p.getRoles()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }

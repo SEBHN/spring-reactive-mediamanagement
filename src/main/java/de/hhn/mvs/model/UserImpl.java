@@ -1,12 +1,11 @@
 package de.hhn.mvs.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,21 +21,19 @@ public final class UserImpl implements User {
     private String email;
 
     private String password;
-
-
-   private List<String> authorities = new ArrayList<>();
+    private List<String> roles = new ArrayList<>();
 
     public UserImpl(){
     }
 
-    public UserImpl(String id, String email, String raw_password, List<String> authorities) {
-        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    public UserImpl(String id, String email, String raw_password, List<String> roles) {
+        //PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
         this.id = id;
         this.email = email;
-        this.password = encoder.encode(raw_password);
-        //this.authorities.addAll(authorities);
+        this.password = raw_password;
+        this.roles.addAll(roles);
         //TODO: maybe not nice but well
-       // if(!this.authorities.contains("ROLE_USER")) authorities.add("ROLE_USER");
+        //if(!this.roles.contains("ROLE_USER")) roles.add("ROLE_USER");
     }
 
     @Override
@@ -61,26 +58,28 @@ public final class UserImpl implements User {
 
     @Override
     public void setPassword(String password) {
-        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        this.password = encoder.encode(password);
+        this.password = password;
     }
 
     @Override
     public List<String> getRoles() {
-        return authorities;
+        return roles;
     }
 
     @Override
-    public void setRoles(List<String> roles) {
-        this.authorities.clear();
-        this.authorities.addAll(roles);
+    public void setRoles(List<String> role) {
+//        this.roles.clear();
+//        this.roles.addAll(roles);
+            this.roles = role;
+
     }
 
 
+    @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> tmp = new ArrayList<>();
-        for (String role : authorities) {
+        for (String role : roles) {
             tmp.add(new SimpleGrantedAuthority(role));
         }
         return tmp;
@@ -112,4 +111,18 @@ public final class UserImpl implements User {
     public boolean isEnabled() {
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "UserImpl{" +
+                "id='" + id + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", roles='" + roles + '\'' +
+                '}';
+    }
+
+
+
+
 }
