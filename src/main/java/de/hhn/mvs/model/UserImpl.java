@@ -34,15 +34,11 @@ public final class UserImpl implements User {
     }
 
     public UserImpl(String id, boolean admin, String email, String password, String token, String name, List<String> roles) {
-
         this.id = id;
         this.email = email;
         this.password = password;
         this.roles.addAll(roles);
-        //TODO: maybe not nice but well
-        //if(!this.roles.contains("ROLE_USER")) roles.add("ROLE_USER");
         this.admin = admin;
-        this.password = password;
         this.token = token;
         this.name = name;
 
