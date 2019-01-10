@@ -20,10 +20,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -64,6 +61,8 @@ public class UserHandlerTest {
                 .build();
         List<String> roles = new ArrayList<>();
         roles.add("ROLE_USER");
+        // TODO: Roles need to be replaced with List<String> .. problem is a deserialisation from jackson of the List
+
         testUser = new UserImpl(UUID.randomUUID().toString(),  "example@domain.tld", enc.encode("testPassword123"),  roles);
         testUser2 = new UserImpl(UUID.randomUUID().toString(),  "example2@domain.tld", enc.encode("testPassword987"),  roles);
 
@@ -76,6 +75,7 @@ public class UserHandlerTest {
     public void connectivity(){
         userSave.block();
         User tmp = userRepo.findByEmail("example@domain.tld").block();
+        assert tmp != null;
         System.out.println(tmp.getEmail());
         webClient.get().uri("/").exchange().expectStatus().isOk();
     }
@@ -90,8 +90,10 @@ public class UserHandlerTest {
             .expectStatus().isCreated()
             .expectBody(User.class)
             .consumeWith(returnedUserResult -> {
+                System.out.println(returnedUserResult);
                 User returnedUser = returnedUserResult.getResponseBody();
                 assertNotEquals(null, returnedUser);
+                assert returnedUser != null;
                 assertEquals(testUser2.getEmail(), returnedUser.getEmail());
 
                 //testUser2.hashPassword();
@@ -116,6 +118,8 @@ public class UserHandlerTest {
                 .consumeWith(returnedUserResult -> {
                     User returnedUser = returnedUserResult.getResponseBody();
                     assertNotEquals(null, returnedUser);
+                    assert checkUser != null;
+                    assert returnedUser != null;
                     assertEquals(checkUser.getId(), returnedUser.getId());
                     assertEquals(checkUser.getEmail(), returnedUser.getEmail());
                 });
@@ -123,8 +127,9 @@ public class UserHandlerTest {
 
     @Test
     public void updateUser(){
-        String userId = createUser(testUser2).getResponseBody().getId();
+        String userId = Objects.requireNonNull(createUser(testUser2).getResponseBody()).getId();
         testUser2 = getUser(userId).getResponseBody();
+        assert testUser2 != null;
         assertEquals(userId, testUser2.getId());
 
         testUser2.setEmail("newExample@domain.tld");
@@ -140,6 +145,7 @@ public class UserHandlerTest {
                 .consumeWith(returnedUserResult -> {
                     User returnedUser = returnedUserResult.getResponseBody();
                     assertNotEquals(null, returnedUser);
+                    assert returnedUser != null;
                     assertEquals(testUser2.getId(), returnedUser.getId());
                     assertEquals(testUser2.getEmail(), returnedUser.getEmail());
 
@@ -149,7 +155,7 @@ public class UserHandlerTest {
 
     @Test
     public void deleteUser(){
-        String userId = createUser(testUser).getResponseBody().getId();
+        String userId = Objects.requireNonNull(createUser(testUser).getResponseBody()).getId();
         webClient.delete().uri("/users/{userId}", userId)
                 .exchange()
                 .expectStatus().isNoContent();

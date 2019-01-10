@@ -20,7 +20,7 @@ public interface User extends UserDetails {
 
     List<String> getRoles();
 
-    void setRoles(List<String> roles);
+    void setRoles(List<String> role);
 
 
 
