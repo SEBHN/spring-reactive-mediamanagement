@@ -113,7 +113,7 @@ public class MediaHandlerTest {
     @Test
     public void getExisting() {
         catMediaSave.block(); // ensure is saved to db
-        webClient.get().uri("/users/media/{id}", catMedia.getId()).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/media/{id}", catMedia.getId()).accept(MediaType.APPLICATION_JSON)
                  .exchange()
                  .expectStatus().isOk()
                  .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -123,7 +123,7 @@ public class MediaHandlerTest {
 
     @Test
     public void getNotExisting() {
-        webClient.get().uri("/users/media/{id}", 1234567890).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/media/{id}", 1234567890).accept(MediaType.APPLICATION_JSON)
                  .exchange()
                  .expectStatus().isNotFound();
     }
@@ -131,7 +131,7 @@ public class MediaHandlerTest {
     @Test
     public void getExistingFromAnotherUser() {
         anotherDogMediaSave.block();
-        webClient.get().uri("/users/media/{id}", anotherDog.getId()).accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/media/{id}", anotherDog.getId()).accept(MediaType.APPLICATION_JSON)
                  .exchange()
                  .expectStatus().isNotFound();
     }
@@ -140,7 +140,7 @@ public class MediaHandlerTest {
     public void list() {
         savedMedia.block(); // ensure every media is saved
 
-        webClient.get().uri("/users/media").accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/media").accept(MediaType.APPLICATION_JSON)
                  .exchange()
                  .expectStatus().isOk()
                  .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -158,7 +158,7 @@ public class MediaHandlerTest {
 
         String folder = "/";
 
-        webClient.get().uri("/users/folders/{folderPath}/media", folder)
+        webClient.get().uri("/folders/{folderPath}/media", folder)
                  .exchange()
                  .expectStatus().isOk()
                  .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -188,7 +188,7 @@ public class MediaHandlerTest {
 
         String folder = "/catPictures";
 
-        webClient.get().uri("/users/folders/{folderPath}/media", folder)
+        webClient.get().uri("/folders/{folderPath}/media", folder)
                  .exchange()
                  .expectStatus().isOk()
                  .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -205,7 +205,7 @@ public class MediaHandlerTest {
 
     @Test
     public void postValidMedia() {
-        webClient.post().uri("/users/media")
+        webClient.post().uri("/media")
                  .contentType(MediaType.APPLICATION_JSON)
                  .body(BodyInserters.fromObject(catMedia))
                  .exchange()
@@ -224,7 +224,7 @@ public class MediaHandlerTest {
 
     @Test
     public void postInvalidMedia_WithString() {
-        webClient.post().uri("/users/media")
+        webClient.post().uri("/media")
                  .contentType(MediaType.APPLICATION_JSON)
                  .body(BodyInserters.fromObject("hi:|"))
                  .exchange()
@@ -233,7 +233,7 @@ public class MediaHandlerTest {
 
     @Test
     public void postInvalidMedia() {
-        webClient.post().uri("/users/media")
+        webClient.post().uri("/media")
                  .contentType(MediaType.APPLICATION_JSON)
                  .body(BodyInserters.fromObject(new MediaImpl(null, null, null, null, null, null)))
                  .exchange()
@@ -250,7 +250,7 @@ public class MediaHandlerTest {
         assertNotEquals(null, mediaId);
 
         webClient.post()
-                 .uri("/users/media/{id}/upload/", mediaId)
+                 .uri("/media/{id}/upload/", mediaId)
                  .contentType(MediaType.MULTIPART_FORM_DATA)
                  .body(BodyInserters.fromMultipartData(multipartDataMap))
                  .exchange()
@@ -282,7 +282,7 @@ public class MediaHandlerTest {
         assertNotNull(uploaded);
 
         webClient.delete()
-                 .uri("/users/media/{id}/", uploadedMedia.getId())
+                 .uri("/media/{id}/", uploadedMedia.getId())
                  .exchange()
                  .expectStatus().isNoContent()
                  .expectBody()
@@ -313,7 +313,7 @@ public class MediaHandlerTest {
         GridFSFile uploadedCat3File = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(uploadedCat3Media.getFileId())));
         assertNotNull(uploadedCat3File);
 
-        webClient.delete().uri("/users/folders/{folderPath}", "catPictures")
+        webClient.delete().uri("/folders/{folderPath}", "catPictures")
                  .exchange()
                  .expectStatus().isNoContent()
                  .expectBody()
@@ -336,7 +336,7 @@ public class MediaHandlerTest {
         assertNotEquals(null, mediaId);
 
         webClient.post()
-                 .uri("/users/media/{id}/upload/", mediaId)
+                 .uri("/media/{id}/upload/", mediaId)
                  .contentType(MediaType.MULTIPART_FORM_DATA)
                  .body(BodyInserters.fromMultipartData(multipartDataMap))
                  .exchange()
@@ -352,7 +352,7 @@ public class MediaHandlerTest {
         assertNotEquals(null, mediaId);
 
         webClient.post()
-                 .uri("/users/media/{id}/upload/", mediaId)
+                 .uri("/media/{id}/upload/", mediaId)
                  .contentType(MediaType.MULTIPART_FORM_DATA)
                  .body(BodyInserters.fromMultipartData(multipartDataMap))
                  .exchange()
@@ -368,7 +368,7 @@ public class MediaHandlerTest {
         dogMedia.setName("newDogName");
         dogMedia.setFilePath("/dog/newDogPath/");
 
-        webClient.put().uri("/users/media/{id}", mediaId)
+        webClient.put().uri("/media/{id}", mediaId)
                  .contentType(MediaType.APPLICATION_JSON)
                  .body(BodyInserters.fromObject(dogMedia))
                  .exchange()
@@ -387,7 +387,7 @@ public class MediaHandlerTest {
 
     @Test
     public void updateNonExistingMedia() {
-        webClient.put().uri("/users/media/{id}", NOT_EXISTING_MEDIA_ID)
+        webClient.put().uri("/media/{id}", NOT_EXISTING_MEDIA_ID)
                  .contentType(MediaType.APPLICATION_JSON)
                  .body(BodyInserters.fromObject(dogMedia))
                  .exchange()
@@ -397,14 +397,14 @@ public class MediaHandlerTest {
     @Test
     public void deleteValidMedia() {
         String mediaId = createMedia(dogMedia).getResponseBody().getId();
-        webClient.delete().uri("/users/media/{id}", mediaId)
+        webClient.delete().uri("/media/{id}", mediaId)
                  .exchange()
                  .expectStatus().isNoContent();
     }
 
     @Test
     public void deleteNonExistingMedia() {
-        webClient.delete().uri("/users/media/{id}", NOT_EXISTING_MEDIA_ID)
+        webClient.delete().uri("/media/{id}", NOT_EXISTING_MEDIA_ID)
                  .exchange()
                  .expectStatus().isNotFound();
     }
@@ -413,7 +413,7 @@ public class MediaHandlerTest {
     @WithMockUser(username = ANY_OTHER_USER_ID)
     public void deleteValidMediaFromOtherUser() {
         String mediaId = dogMediaSave.block().getId();
-        webClient.delete().uri("/users/media/{id}", mediaId)
+        webClient.delete().uri("/media/{id}", mediaId)
                  .exchange()
                  .expectStatus().isNotFound();
     }
@@ -430,7 +430,7 @@ public class MediaHandlerTest {
 
         //multiple tags
         webClient.get()
-                 .uri("/users/folders/{folderPath}/taggedMedia?tag={tag1}&tag={tag2}"
+                 .uri("/folders/{folderPath}/taggedMedia?tag={tag1}&tag={tag2}"
                          , folder, cats.getName(), cute.getName())
                  .exchange()
                  .expectStatus().isOk()
@@ -448,7 +448,7 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        webClient.get().uri("/users/folders/{folderPath}/taggedMedia?tag={tag1}", "/", cute.getName())
+        webClient.get().uri("/folders/{folderPath}/taggedMedia?tag={tag1}", "/", cute.getName())
                  .exchange()
                  .expectStatus().isOk()
                  .expectBodyList(Media.class)
@@ -465,7 +465,7 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        webClient.get().uri("/users/folders/{folderPath}/taggedMedia?tag={tag1}", "/", new Tag("CUTE").getName())
+        webClient.get().uri("/folders/{folderPath}/taggedMedia?tag={tag1}", "/", new Tag("CUTE").getName())
                  .exchange()
                  .expectStatus().isOk()
                  .expectBodyList(Media.class)
@@ -485,7 +485,7 @@ public class MediaHandlerTest {
         String folder = "/catPictures";
         //1 tag, search only in folder
         webClient.get()
-                 .uri("/users/folders/{folderPath}/taggedMedia?tag={tag1}"
+                 .uri("/folders/{folderPath}/taggedMedia?tag={tag1}"
                          , folder, cute.getName())
                  .exchange()
                  .expectStatus().isOk()
@@ -506,7 +506,7 @@ public class MediaHandlerTest {
         String folder = "/";
         //not existing tag
         webClient.get()
-                 .uri("/users/folders/{folderPath}/taggedMedia?tag={tag1}"
+                 .uri("/folders/{folderPath}/taggedMedia?tag={tag1}"
                          , folder, "notexisting")
                  .exchange()
                  .expectStatus().isOk()
@@ -522,11 +522,11 @@ public class MediaHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         Media dog = dogMediaSave.block();
 
-        webClient.delete().uri("/users/folders/{folderPath}", "catPictures")
+        webClient.delete().uri("/folders/{folderPath}", "catPictures")
                  .exchange()
                  .expectStatus().isNoContent();
 
-        webClient.get().uri("/users/media").accept(MediaType.APPLICATION_JSON)
+        webClient.get().uri("/media").accept(MediaType.APPLICATION_JSON)
                  .exchange()
                  .expectStatus().isOk()
                  .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -544,7 +544,7 @@ public class MediaHandlerTest {
     }
 
     private EntityExchangeResult<Media> createMedia(Media media) {
-        return webClient.post().uri("/users/media")
+        return webClient.post().uri("/media")
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(BodyInserters.fromObject(media))
                         .exchange()
@@ -554,7 +554,7 @@ public class MediaHandlerTest {
 
     private EntityExchangeResult<Media> uploadMedia(String mediaId, MultiValueMap<String, Object> multipartDataMap) {
         return webClient.post()
-                        .uri("/users/media/{id}/upload/", mediaId)
+                        .uri("/media/{id}/upload/", mediaId)
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .body(BodyInserters.fromMultipartData(multipartDataMap))
                         .exchange()
@@ -563,7 +563,7 @@ public class MediaHandlerTest {
     }
 
     private EntityExchangeResult<Media> getMedia(String mediaId) {
-        return webClient.get().uri("/users/media/{id}/", mediaId)
+        return webClient.get().uri("/media/{id}/", mediaId)
                         .exchange()
                         .expectStatus().isOk()
                         .expectBody(Media.class).returnResult();
