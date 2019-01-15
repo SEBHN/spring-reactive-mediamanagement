@@ -22,17 +22,17 @@ public class MediaRouter {
     @Bean
     public RouterFunction<ServerResponse> mediaRoute(MediaHandler mediaHandler) {
         return RouterFunctions
-                .route(GET("/users/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::get)
-                .andRoute(GET("/users/media/{id}/download").and(accept(APPLICATION_OCTET_STREAM)), mediaHandler::download)
-                .andRoute(GET("/users/media").and(accept(APPLICATION_JSON)), mediaHandler::list)
-                .andRoute(POST("/users/media").and(accept(APPLICATION_JSON)), mediaHandler::create)
-                .andRoute(POST("/users/media/{id}/upload").and(accept(MULTIPART_FORM_DATA)), mediaHandler::upload)
+                .route(GET("/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::get)
+                .andRoute(GET("/media/{id}/download").and(accept(APPLICATION_OCTET_STREAM)), mediaHandler::download)
+                .andRoute(GET("/media").and(accept(APPLICATION_JSON)), mediaHandler::list)
+                .andRoute(POST("/media").and(accept(APPLICATION_JSON)), mediaHandler::create)
+                .andRoute(POST("/media/{id}/upload").and(accept(MULTIPART_FORM_DATA)), mediaHandler::upload)
                 .filter(mediaHandler.illegalStateToBadRequest())
-                .andRoute(PUT("/users/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
-                .andRoute(DELETE("/users/media/{id}").and(accept(ALL)), mediaHandler::delete)
-                .andRoute(GET("/users/folders/{folderPath}/media").and(accept(APPLICATION_JSON)), mediaHandler::listFolderContent)
-                .andRoute(GET("/users/folders/{folderPath}/taggedMedia").and(accept(APPLICATION_JSON)), mediaHandler::listTaggedMedia)
-                .andRoute(DELETE("/users/folders/{folderPath}").and(accept(ALL)), mediaHandler::deleteFolder)
+                .andRoute(PUT("/media/{id}").and(accept(APPLICATION_JSON)), mediaHandler::update)
+                .andRoute(DELETE("/media/{id}").and(accept(ALL)), mediaHandler::delete)
+                .andRoute(GET("/folders/{folderPath}/media").and(accept(APPLICATION_JSON)), mediaHandler::listFolderContent)
+                .andRoute(GET("/folders/{folderPath}/taggedMedia").and(accept(APPLICATION_JSON)), mediaHandler::listTaggedMedia)
+                .andRoute(DELETE("/folders/{folderPath}").and(accept(ALL)), mediaHandler::deleteFolder)
                 ;
     }
 }
