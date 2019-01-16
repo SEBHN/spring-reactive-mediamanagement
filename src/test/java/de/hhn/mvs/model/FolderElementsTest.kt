@@ -7,13 +7,15 @@ import org.junit.Test
 class FolderElementsTest {
 
     private var folder: FolderElements? = null
+    private var medias: MutableList<Media>? = null;
+    private var subfolders: MutableList<Subfolder>? = null;
 
     @Before
     fun setUp() {
         val subfolder = Subfolder("subfolderName")
         val media: Media = MediaImpl("id", "aname", "afileid", ".kt", "FolderElementsTest", "kotlin")
-        val subfolders = mutableListOf(subfolder)
-        val medias = mutableListOf(media)
+        subfolders = mutableListOf(subfolder)
+        medias = mutableListOf(media)
         folder = FolderElements(subfolders, medias)
     }
 
@@ -22,5 +24,15 @@ class FolderElementsTest {
         val expected = "Subfolders: [Subfolder: subfolderName]\n" +
                 "Media: [Media{id='id', name='aname', fileId='afileid', fileExtension='.kt', filePath='FolderElementsTest', owner=kotlin, tags=[]}]"
         assertEquals(expected, folder.toString())
+    }
+
+    @Test
+    fun twoSameFolderHashCode_ExpectEqualsTrue() {
+        assertEquals(FolderElements(subfolders, medias).hashCode(), folder.hashCode());
+    }
+
+    @Test
+    fun twoSameFolderEquals_ExpectEqualsTrue() {
+        assertEquals(FolderElements(subfolders, medias), folder);
     }
 }
