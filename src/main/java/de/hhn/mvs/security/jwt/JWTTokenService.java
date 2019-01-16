@@ -51,8 +51,6 @@ public class JWTTokenService {
         SignedJWT signedJWT;
         JWTClaimsSet claimsSet;
 
-        //TODO refactor this nasty code
-
         claimsSet = new JWTClaimsSet.Builder()
                 .subject(subject)
                 .issuer("rapha.io")
