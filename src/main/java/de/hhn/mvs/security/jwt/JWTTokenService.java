@@ -53,7 +53,7 @@ public class JWTTokenService {
 
         claimsSet = new JWTClaimsSet.Builder()
                 .subject(subject)
-                .issuer("rapha.io")
+                .issuer("sebhn.github.io")
                 .expirationTime(new Date(getExpiration()))
                 .claim("roles", authorities
                         .stream()
