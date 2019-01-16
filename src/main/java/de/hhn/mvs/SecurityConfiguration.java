@@ -1,7 +1,5 @@
 package de.hhn.mvs;
 
-import java.util.Arrays;
-import java.util.function.Function;
 
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.security.basic.BasicAuthenticationSuccessHandler;
@@ -33,6 +31,9 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
+import java.util.function.Function;
+
 import static org.springframework.http.HttpMethod.POST;
 
 @Primary
@@ -40,7 +41,9 @@ import static org.springframework.http.HttpMethod.POST;
 @EnableReactiveMethodSecurity
 public class SecurityConfiguration {
 
-    private static final String FRONTEND_LOCALHOST = "http://localhost:4200";
+    private static final String FRONTEND_ANGULAR_LOCALHOST = "http://localhost:4200";
+    private static final String FRONTEND_VUE_LOCALHOST = "http://localhost:8081";
+    private static final String FRONTEND_VUE_LOCALHOST_STAGED = "http://localhost:8080";
     private static final String FRONTEND_STAGING = "https://sebhn.github.io";
 
     @Value("${own.security}")
@@ -90,14 +93,13 @@ public class SecurityConfiguration {
         corsConfig.applyPermitDefaultValues();
         corsConfig.addAllowedMethod(HttpMethod.PUT);
         corsConfig.addAllowedMethod(HttpMethod.DELETE);
-        corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_LOCALHOST, FRONTEND_STAGING));
+        corsConfig.setAllowedOrigins(Arrays.asList(FRONTEND_ANGULAR_LOCALHOST, FRONTEND_VUE_LOCALHOST, FRONTEND_VUE_LOCALHOST_STAGED, FRONTEND_STAGING));
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
         return source;
     }
-
 
     @Bean
     public ReactiveUserDetailsService userDetailsService(UserCrudRepo users) {
@@ -148,7 +150,7 @@ public class SecurityConfiguration {
         bearerConverter = new ServerHttpBearerAuthenticationConverter();
 
         bearerAuthenticationFilter.setServerAuthenticationConverter(bearerConverter::apply);
-        //TODO: mhh ? ServerWebExchangeMatchers.pathMatchers("/**")
+        //TODO: mhh ? ServerWebExchangeMatchers.pathMatchers("/**") 
         bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/**"));
 
         return bearerAuthenticationFilter;
@@ -160,3 +162,4 @@ public class SecurityConfiguration {
     }
 
 }
+

@@ -81,7 +81,7 @@ public class FolderHandlerTest {
         Media kitten = kittenMediaInFolderMediaSave.block();
         String oldPath = "/kitten/";//.replace("/", "%2F");
         webClient.put()
-                 .uri("/users/folders/{oldPath}", oldPath)
+                 .uri("/folders/{oldPath}", oldPath)
                  .body(BodyInserters.fromObject("/catPictures/kitten/"))
                  .accept(MediaType.TEXT_PLAIN)
                  .exchange()
@@ -106,7 +106,7 @@ public class FolderHandlerTest {
         Media catMedia3 = cat3MediaInFolderMediaSave.block();
         String oldPath = "/catPictures/";
         webClient.put()
-                 .uri("/users/folders/{oldPath}", oldPath)
+                 .uri("/folders/{oldPath}", oldPath)
                  .body(BodyInserters.fromObject("/catPics/"))
                  .accept(MediaType.TEXT_PLAIN)
                  .exchange()

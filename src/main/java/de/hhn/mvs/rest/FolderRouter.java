@@ -14,6 +14,6 @@ public class FolderRouter {
     @Bean
     public RouterFunction foldersRoute(FolderHandler folderHandler) {
         return RouterFunctions
-                .route(PUT("/users/folders/{oldPath}").and(accept(TEXT_PLAIN)), folderHandler::updateFolder);
+                .route(PUT("/folders/{oldPath}").and(accept(TEXT_PLAIN)), folderHandler::updateFolder);
     }
 }

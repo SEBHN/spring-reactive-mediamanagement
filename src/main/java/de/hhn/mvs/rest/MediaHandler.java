@@ -77,18 +77,18 @@ public class MediaHandler {
     Mono<ServerResponse> get(ServerRequest request) {
         String mediaId = request.pathVariable("id");
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name -> mediaRepo.findByIdAndOwnerId(mediaId, name)
-                                                .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
-                                                .switchIfEmpty(notFound().build()));
+                .map(Principal::getName)
+                .flatMap(name -> mediaRepo.findByIdAndOwnerId(mediaId, name)
+                        .flatMap(media -> ok().contentType(APPLICATION_JSON).body(fromObject(media)))
+                        .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> list(ServerRequest request) {
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name -> ok().contentType(MediaType.APPLICATION_JSON)
-                                           .body(mediaRepo.findAllByOwnerId(name), Media.class)
-                                           .switchIfEmpty(notFound().build()));
+                .map(Principal::getName)
+                .flatMap(name -> ok().contentType(MediaType.APPLICATION_JSON)
+                        .body(mediaRepo.findAllByOwnerId(name), Media.class)
+                        .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> listFolderContent(ServerRequest request) {
@@ -96,9 +96,9 @@ public class MediaHandler {
         String parsedfolderPath = parseFolderPathFormat(folderPath);
 
         Mono<List<Media>> monoMedias = request.principal()
-                                              .map(Principal::getName)
-                                              .flatMap(name -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parsedfolderPath)
-                                                                        .collectList());
+                .map(Principal::getName)
+                .flatMap(name -> mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parsedfolderPath)
+                        .collectList());
         Mono<FolderElements> folderElementsMono =
                 monoMedias
                         .map(media -> {
@@ -121,7 +121,7 @@ public class MediaHandler {
                         });
         //TODO: error handling. e.g. Folder does not exist -> empty return
         return ok().contentType(MediaType.APPLICATION_JSON)
-                   .body(fromPublisher(folderElementsMono, FolderElements.class));
+                .body(fromPublisher(folderElementsMono, FolderElements.class));
     }
 
     Mono<ServerResponse> listTaggedMedia(ServerRequest request) {
@@ -155,13 +155,13 @@ public class MediaHandler {
         Mono<MediaImpl> createdMediaMono = principalNameMono.flatMap(name -> mediaMono.map(media -> createValidatedMediaCopy(id, name, media)));
 
         return ServerResponse.status(HttpStatus.CREATED)
-                             .contentType(MediaType.APPLICATION_JSON)
-                             .body(fromPublisher(createdMediaMono
-                                     .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                     .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
-                                     .flatMap(mediaRepo::save), Media.class)
-                             )
-                             .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(fromPublisher(createdMediaMono
+                        .onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                        .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
+                        .flatMap(mediaRepo::save), Media.class)
+                )
+                .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     private MediaImpl createValidatedMediaCopy(UUID id, String name, Media media) {
@@ -175,18 +175,18 @@ public class MediaHandler {
         String id = request.pathVariable("id");
 
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name -> mediaRepo
-                              .findByIdAndOwnerId(id, name)
-                              .flatMap(existingMedia -> {
-                                  GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
-                                  if (gridFsfile == null) {
-                                      return notFound().build();
-                                  }
-                                  Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
-                                  return ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromObject(rs));
-                              })
-                              .switchIfEmpty(notFound().build()));
+                .map(Principal::getName)
+                .flatMap(name -> mediaRepo
+                        .findByIdAndOwnerId(id, name)
+                        .flatMap(existingMedia -> {
+                            GridFSFile gridFsfile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(existingMedia.getFileId())));
+                            if (gridFsfile == null) {
+                                return notFound().build();
+                            }
+                            Resource rs = new GridFsResource(gridFsfile, getGridFsBucket().openDownloadStream(gridFsfile.getObjectId()));
+                            return ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fromObject(rs));
+                        })
+                        .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> upload(ServerRequest request) {
@@ -194,15 +194,15 @@ public class MediaHandler {
         String fileKey = "file";
 
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name -> request.body(BodyExtractors.toMultipartData())
-                                              .flatMap(parts -> {
-                                                  Map<String, Part> parameterFileMap = parts.toSingleValueMap();
-                                                  if (!parameterFileMap.containsKey(fileKey)) {
-                                                      return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
-                                                  }
-                                                  return handleUpload(id, name, (FilePart) parameterFileMap.get(fileKey));
-                                              }));
+                .map(Principal::getName)
+                .flatMap(name -> request.body(BodyExtractors.toMultipartData())
+                        .flatMap(parts -> {
+                            Map<String, Part> parameterFileMap = parts.toSingleValueMap();
+                            if (!parameterFileMap.containsKey(fileKey)) {
+                                return ServerResponse.status(HttpStatus.BAD_REQUEST).body(fromObject("File for upload required. Key name must be '" + fileKey + "'."));
+                            }
+                            return handleUpload(id, name, (FilePart) parameterFileMap.get(fileKey));
+                        }));
     }
 
     private Mono<? extends ServerResponse> handleUpload(String id, String userId, FilePart part) {
@@ -241,15 +241,18 @@ public class MediaHandler {
         Mono<Media> media = request.bodyToMono(Media.class);
 
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name ->
-                              mediaRepo.findByIdAndOwnerId(id, name)
-                                       .flatMap(existingMedia ->
-                                               ok().contentType(MediaType.APPLICATION_JSON).body(
-                                                       fromPublisher(media.map(p ->
-                                                               new MediaImpl(id, p.getName(), p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), name, p.getTags()))
-                                                                          .flatMap(mediaRepo::save), Media.class)))
-                                       .switchIfEmpty(notFound().build()));
+                .map(Principal::getName)
+                .flatMap(name ->
+                        mediaRepo.findByIdAndOwnerId(id, name)
+                                .flatMap(existingMedia ->
+                                        ok().contentType(MediaType.APPLICATION_JSON).body(
+                                                fromPublisher(media.map(p -> {
+                                                    Media recreatedMedia = new MediaImpl(id, p.getName(),
+                                                            p.getFileId(), p.getFileExtension(), parseFolderPathFormat(p.getFilePath()), name, p.getTags());
+                                                    recreatedMedia.setFileMetaData(p.getFileMetaData());
+                                                    return recreatedMedia;
+                                                }).flatMap(mediaRepo::save), Media.class)))
+                                .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> delete(ServerRequest request) {
@@ -258,37 +261,37 @@ public class MediaHandler {
             return ServerResponse.status(HttpStatus.NOT_FOUND).body(fromObject("Id must not be empty"));
         }
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name ->
-                              mediaRepo.findByIdAndOwnerId(id, name)
-                                       .flatMap(existingMedia -> {
-                                           Query deleteFromGridFs = new Query(GridFsCriteria.where("_id").is(existingMedia.getFileId()));
-                                           gridFsTemplate.delete(deleteFromGridFs);
-                                           return noContent().build(mediaRepo.delete(existingMedia));
-                                       })
-                                       .switchIfEmpty(notFound().build()));
+                .map(Principal::getName)
+                .flatMap(name ->
+                        mediaRepo.findByIdAndOwnerId(id, name)
+                                .flatMap(existingMedia -> {
+                                    Query deleteFromGridFs = new Query(GridFsCriteria.where("_id").is(existingMedia.getFileId()));
+                                    gridFsTemplate.delete(deleteFromGridFs);
+                                    return noContent().build(mediaRepo.delete(existingMedia));
+                                })
+                                .switchIfEmpty(notFound().build()));
     }
 
     Mono<ServerResponse> deleteFolder(ServerRequest request) {
         String filePath = request.pathVariable("folderPath");
 
         return request.principal()
-                      .map(Principal::getName)
-                      .flatMap(name ->
-                              mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parseFolderPathFormat(filePath))
-                                       .map(toDelete -> {
-                                           gridFsTemplate.delete(new Query(Criteria.where("_id").is(toDelete.getFileId())));
-                                           return noContent().build(); // will not be returned to user
-                                       })
-                                       .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
-                                       .then(mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(name, parseFolderPathFormat(filePath))
-                                                             .flatMap(deleteResult -> {
-                                                                 if (deleteResult.getDeletedCount() == 0) {
-                                                                     return notFound().build();
-                                                                 } else {
-                                                                     return noContent().build();
-                                                                 }
-                                                             })));
+                .map(Principal::getName)
+                .flatMap(name ->
+                        mediaRepo.findAllByOwnerIdAndFilePathIsStartingWith(name, parseFolderPathFormat(filePath))
+                                .map(toDelete -> {
+                                    gridFsTemplate.delete(new Query(Criteria.where("_id").is(toDelete.getFileId())));
+                                    return noContent().build(); // will not be returned to user
+                                })
+                                .onErrorReturn(ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build())
+                                .then(mediaTemplateOps.deleteAllByOwnerIdAndFilePathStartingWith(name, parseFolderPathFormat(filePath))
+                                        .flatMap(deleteResult -> {
+                                            if (deleteResult.getDeletedCount() == 0) {
+                                                return notFound().build();
+                                            } else {
+                                                return noContent().build();
+                                            }
+                                        })));
     }
 
     /**
@@ -296,7 +299,7 @@ public class MediaHandler {
      */
     HandlerFilterFunction<ServerResponse, ServerResponse> illegalStateToBadRequest() {
         return (request, next) -> next.handle(request)
-                                      .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
+                .onErrorMap(IllegalStateException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     private GridFSBucket getGridFsBucket() {
