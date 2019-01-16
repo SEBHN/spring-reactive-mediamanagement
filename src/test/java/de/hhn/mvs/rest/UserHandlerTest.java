@@ -1,10 +1,5 @@
 package de.hhn.mvs.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
@@ -27,9 +22,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -63,15 +61,6 @@ public class UserHandlerTest {
     @After
     public void tearDown() {
         userRepo.deleteAll().block();
-    }
-
-    @Test
-    public void connectivity() {
-        userSave.block();
-        User tmp = userRepo.findByEmail("example@domain.tld").block();
-        assert tmp != null;
-        System.out.println(tmp.getEmail());
-        webClient.get().uri("/").exchange().expectStatus().isOk();
     }
 
     @Test
