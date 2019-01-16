@@ -36,7 +36,7 @@ public class FolderElements {
 
     @Override
     public String toString() {
-        return "Subfolders:: " + subfolders.toString() + "\n"
+        return "Subfolders: " + subfolders.toString() + "\n"
                 + "Media: " + media.toString();
     }
 
