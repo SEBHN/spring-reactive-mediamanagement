@@ -3,20 +3,26 @@ package de.hhn.mvs.rest;
 import de.hhn.mvs.database.UserCrudRepo;
 import de.hhn.mvs.model.User;
 import de.hhn.mvs.model.UserImpl;
-import reactor.core.publisher.Mono;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 
-import static org.springframework.http.MediaType.*;
-import static org.springframework.web.reactive.function.BodyInserters.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.web.reactive.function.BodyInserters.fromObject;
+import static org.springframework.web.reactive.function.BodyInserters.fromPublisher;
 import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Component
@@ -25,10 +31,15 @@ public class UserHandler {
     @Autowired
     private UserCrudRepo userRepo;
 
-    Mono<ServerResponse> get(ServerRequest request){
+    PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+    Mono<ServerResponse> get(ServerRequest request) {
         String userId = request.pathVariable("userId");
         return userRepo.findById(userId)
-                .flatMap(user -> ok().contentType(APPLICATION_JSON).body(fromObject(user)))
+                .flatMap(user -> {
+                    user.setPassword(null);
+                    return ok().contentType(APPLICATION_JSON).body(fromObject(user));
+                })
                 .switchIfEmpty(notFound().build());
     }
 
@@ -40,12 +51,12 @@ public class UserHandler {
                 .body(fromPublisher(userMono.map(user ->
                                 {
                                     UserImpl createdUser = new UserImpl(id.toString(), user.isAdmin(), user.getEmail(),
-                                        user.getPassword(), user.getToken(), user.getName());
+                                        user.getPassword(), user.getToken(), user.getName(), new ArrayList<>(Arrays.asList("ROLE_USER")));
+                                    createdUser.encodePassword();
                                     return createdUser;
                                 }).onErrorMap(IllegalArgumentException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .onErrorMap(DecodingException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()))
                                         .flatMap(userRepo::save), User.class)
-
                 )
                 .onErrorMap(RuntimeException.class, e -> new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
@@ -64,11 +75,10 @@ public class UserHandler {
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(fromPublisher(userMono.map(
                             user -> new UserImpl(userId, user.isAdmin(), user.getEmail(), user.getPassword(),
-                                user.getToken(), user.getName()))
+                                user.getToken(), user.getName(), user.getRoles()))
                                                 .flatMap(userRepo::save), User.class)))
                 .switchIfEmpty(notFound().build());
     }
-
 
     Mono<ServerResponse> delete(ServerRequest request) {
         String userId = request.pathVariable("userId");
@@ -78,7 +88,7 @@ public class UserHandler {
 
         return userRepo
                 .findById(userId)
-                .flatMap(existingMedia -> noContent().build(userRepo.delete(existingMedia)))
+                .flatMap(existingUser -> noContent().build(userRepo.delete(existingUser)))
                 .switchIfEmpty(notFound().build());
     }
 

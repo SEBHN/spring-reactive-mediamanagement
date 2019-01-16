@@ -23,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -35,7 +36,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!", roles = "USER")
 public class OktaHandlerTest {
 
     @Autowired
@@ -50,7 +51,16 @@ public class OktaHandlerTest {
     @Before
     public void setUp() {
         String randomEmail = "oktaHandler" + new Random().nextInt() + "test@junit.org";
-        user = new UserImpl("anId", false, randomEmail, "superSecret123!", "", "OktaHandlerTest");
+        user = new UserImpl(
+                "anId",
+                false,
+                randomEmail,
+                "superSecret123!",
+                "",
+                "OktaHandlerTest",
+                new ArrayList<String>() {{
+            add("ROLE_USER");
+        }});
     }
 
     @After

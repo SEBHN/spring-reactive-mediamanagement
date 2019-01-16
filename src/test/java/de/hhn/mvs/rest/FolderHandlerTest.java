@@ -1,8 +1,5 @@
 package de.hhn.mvs.rest;
 
-import java.util.List;
-import java.util.UUID;
-
 import de.hhn.mvs.database.MediaCrudRepo;
 import de.hhn.mvs.model.Media;
 import de.hhn.mvs.model.MediaImpl;
@@ -21,12 +18,15 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.UUID;
+
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!", roles = "USER")
 public class FolderHandlerTest {
 
     private static final String ANY_USER_ID = "junit@hs-heilbronn.de";
