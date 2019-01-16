@@ -41,4 +41,10 @@ public class OktaCredentials {
         return Objects.hash(password);
     }
 
+    @Override
+    public String toString() {
+        return "OktaCredentials{" +
+                "password=" + password +
+                '}';
+    }
 }
