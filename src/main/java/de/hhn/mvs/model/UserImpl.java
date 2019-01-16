@@ -1,5 +1,10 @@
 package de.hhn.mvs.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -8,11 +13,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
 
 
 @Document
@@ -36,7 +36,9 @@ public final class UserImpl implements User {
         this.id = id;
         this.email = email;
         this.password = password;
-        this.roles.addAll(roles);
+        if (roles != null){
+            this.roles.addAll(roles);
+        }
         this.admin = admin;
         this.token = token;
         this.name = name;
@@ -97,19 +99,17 @@ public final class UserImpl implements User {
     public void setRoles(List<String> role) {
         this.roles.clear();
         this.roles.addAll(role);
-
-
     }
 
 
     @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> tmp = new ArrayList<>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
         for (String role : roles) {
-            tmp.add(new SimpleGrantedAuthority(role));
+            authorities.add(new SimpleGrantedAuthority(role));
         }
-        return tmp;
+        return authorities;
 
     }
 
