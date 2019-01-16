@@ -1,10 +1,5 @@
 package de.hhn.mvs.model;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -14,6 +9,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 
 @Document
@@ -152,6 +151,7 @@ public final class UserImpl implements User {
         return "UserImpl{" +
                 "id='" + id + '\'' +
                 ", email='" + email + '\'' +
+                ", admin=" + admin +
                 ", token='" + token + '\'' +
                 ", name='" + name + '\'' +
                 ", password='" + password + '\'' +
@@ -164,16 +164,17 @@ public final class UserImpl implements User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserImpl user = (UserImpl) o;
-        return id.equals(user.id) &&
-                email.equals(user.email) &&
+        return admin == user.admin &&
+                Objects.equals(id, user.id) &&
+                Objects.equals(email, user.email) &&
                 Objects.equals(token, user.token) &&
-                name.equals(user.name) &&
-                password.equals(user.password) &&
-                roles.equals(user.roles);
+                Objects.equals(name, user.name) &&
+                Objects.equals(password, user.password) &&
+                Objects.equals(roles, user.roles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, email, token, name, password, roles);
+        return Objects.hash(id, email, admin, token, name, password, roles);
     }
 }

@@ -150,7 +150,7 @@ public class SecurityConfiguration {
         bearerConverter = new ServerHttpBearerAuthenticationConverter();
 
         bearerAuthenticationFilter.setServerAuthenticationConverter(bearerConverter::apply);
-        //TODO: mhh ? ServerWebExchangeMatchers.pathMatchers("/**") 
+        //TODO: mhh ? ServerWebExchangeMatchers.pathMatchers("/**")
         bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/**"));
 
         return bearerAuthenticationFilter;

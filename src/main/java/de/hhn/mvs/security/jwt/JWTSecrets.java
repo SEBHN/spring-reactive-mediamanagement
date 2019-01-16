@@ -20,9 +20,9 @@
 package de.hhn.mvs.security.jwt;
 
 /**
+ * TODO: better approach?
  * A a static class that abstracts a secret provider
  * Later this one can be changed with a better approach
- *
  */
 public class JWTSecrets {
 
