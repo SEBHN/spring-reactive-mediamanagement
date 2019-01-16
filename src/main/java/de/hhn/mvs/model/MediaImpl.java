@@ -2,10 +2,10 @@ package de.hhn.mvs.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Document
@@ -19,6 +19,7 @@ public final class MediaImpl implements Media {
     private String filePath;
     private String ownerId;
     private List<Tag> tags;
+    private Map<String, String> fileMetadata;
 
     public MediaImpl() {
         // for jackson
@@ -41,7 +42,7 @@ public final class MediaImpl implements Media {
     }
 
     public boolean validate() {
-        if (name == null && fileId == null && fileExtension == null && (filePath == null || filePath == "" || filePath == "/") && (tags == null || tags.size() == 0))
+        if (name == null && fileId == null && fileExtension == null && (filePath == null || filePath.isEmpty() || filePath.equals("/")) && (tags == null || tags.isEmpty()))
             throw new IllegalArgumentException("Parameters for creating a Media Object must not be empty");
         return true;
     }
@@ -102,16 +103,6 @@ public final class MediaImpl implements Media {
     }
 
     @Override
-    public boolean addTag(Tag tag) {
-        return this.tags.add(tag);
-    }
-
-    @Override
-    public boolean removeTag(Tag tag) {
-        return this.tags.remove(tag);
-    }
-
-    @Override
     public String getOwnerId() {
         return this.ownerId;
     }
@@ -119,6 +110,16 @@ public final class MediaImpl implements Media {
     @Override
     public void setOwnerId(String userId) {
         this.ownerId = userId;
+    }
+
+    @Override
+    public void setFileMetaData(Map<String, String> fileMetadata) {
+        this.fileMetadata = fileMetadata;
+    }
+
+    @Override
+    public Map<String, String> getFileMetaData() {
+        return fileMetadata;
     }
 
     @Override
@@ -145,11 +146,12 @@ public final class MediaImpl implements Media {
                 Objects.equals(fileExtension, media.fileExtension) &&
                 Objects.equals(filePath, media.filePath) &&
                 Objects.equals(tags, media.tags) &&
-                Objects.equals(ownerId, media.ownerId);
+                Objects.equals(ownerId, media.ownerId) &&
+                Objects.equals(fileMetadata, media.fileMetadata);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, fileId, fileExtension, filePath, tags, ownerId);
+        return Objects.hash(id, name, fileId, fileExtension, filePath, tags, ownerId, fileMetadata);
     }
 }

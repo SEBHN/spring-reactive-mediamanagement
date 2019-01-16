@@ -1,8 +1,8 @@
 package de.hhn.mvs.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 import java.util.List;
+import java.util.Map;
 
 /**
  * Media-metadata
@@ -32,12 +32,12 @@ public interface Media {
 
     void setTags(List<Tag> tags);
 
-    boolean addTag(Tag tag);
-
-    boolean removeTag(Tag tag);
-
     void setOwnerId(String userId);
 
     String getOwnerId();
+
+    void setFileMetaData(Map<String, String> fileMetaData);
+
+    Map<String, String> getFileMetaData();
 
 }
