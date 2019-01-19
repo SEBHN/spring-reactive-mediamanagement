@@ -14,3 +14,4 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_451ce9a88da3_key -iv $encrypted_451ce9a88da3_iv -in secrets.tar.enc -out secrets.tar -d
 - tar xvf secrets.tar
 - mv test.application.properties src/test/resources/application.properties
+- mv application.properties src/main/resources/application.properties
