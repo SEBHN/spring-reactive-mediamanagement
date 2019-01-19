@@ -1,1 +1,15 @@
 language: java
+install: true
+
+jdk:
+- oraclejdk8
+
+#before_install:
+#  - chmod +x ./gradlew
+
+script:
+  - ./gradlew build --scan -s
+
+
+after_success:
+- ./gradlew test jacocoTestReport coveralls
