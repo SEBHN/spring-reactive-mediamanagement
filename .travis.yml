@@ -14,6 +14,6 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_e7387fde0a6b_key -iv $encrypted_e7387fde0a6b_iv
   -in applicationtest.properties.enc -out application.properties -d
 - mv application.properties src/test/resources/application.properties
-- openssl aes-256-cbc -K $encrypted_0e3121bed2e5_key -iv $encrypted_0e3121bed2e5_iv
-  -in application.properties.enc -out application.properties -d
-- mv application.properties src/main/resources/application.properties
+#- openssl aes-256-cbc -K $encrypted_0e3121bed2e5_key -iv $encrypted_0e3121bed2e5_iv
+#  -in application.properties.enc -out application.properties -d
+#- mv application.properties src/main/resources/application.properties
