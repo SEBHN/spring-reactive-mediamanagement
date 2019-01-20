@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/SEBHN/spring-reactive-mediamanagement.svg?branch=travis)](https://travis-ci.org/SEBHN/spring-reactive-mediamanagement)
-[![Coverage Status](https://coveralls.io/repos/SEBHN/spring-reactive-mediamanagement/badge.svg?branch=develop)](https://coveralls.io/r/SEBHN/spring-reactive-mediamanagement?branch=travis)
+[![codecov](https://codecov.io/gh/SEBHN/spring-reactive-mediamanagement/branch/travis/graph/badge.svg)](https://codecov.io/gh/SEBHN/spring-reactive-mediamanagement)
 
 
 # Tech demo for an media management app on Spring 5 Reactive Stack
