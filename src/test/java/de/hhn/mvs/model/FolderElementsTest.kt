@@ -6,9 +6,9 @@ import org.junit.Test
 
 class FolderElementsTest {
 
-    private var folder: FolderElements? = null
-    private var medias: MutableList<Media>? = null;
-    private var subfolders: MutableList<Subfolder>? = null;
+    private lateinit var folder: FolderElements
+    private lateinit var medias: MutableList<Media>
+    private lateinit var subfolders: MutableList<Subfolder>
 
     @Before
     fun setUp() {
@@ -28,11 +28,11 @@ class FolderElementsTest {
 
     @Test
     fun twoSameFolderHashCode_ExpectEqualsTrue() {
-        assertEquals(FolderElements(subfolders, medias).hashCode(), folder.hashCode());
+        assertEquals(FolderElements(subfolders, medias).hashCode(), folder.hashCode())
     }
 
     @Test
     fun twoSameFolderEquals_ExpectEqualsTrue() {
-        assertEquals(FolderElements(subfolders, medias), folder);
+        assertEquals(FolderElements(subfolders, medias), folder)
     }
 }
