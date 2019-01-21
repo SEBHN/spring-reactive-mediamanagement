@@ -27,7 +27,7 @@ okta.apiUrl=${okta.baseUrl}/api/v1
 # users group
 okta.userGroupIds= TODO your_group_ids (if you have groups)
 ```
-Don't forget to use different DB collections for test and productive usage. You'll find exmaple files resources. 
+You'll find exmaple files in resources. <br> Don't forget to use different DB collections for test and productive usage. 
 
 
 ## Frontend
