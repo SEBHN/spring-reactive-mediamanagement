@@ -4,8 +4,8 @@
 
 # Tech demo for Spring 5 on Reactive Stack - A media management app
 
-This Project shows an sample application on spring 5 reactive stack. 
-It implements the backend for a media mangamement app like OneDrive or GoogleDrive. It focuses on a good usage of technologies rather than a wide functionality. The backend supports folders, tagging and metadata extraction such as a simple user managment. There are functional endpoints for each of these functions given in the Router classes. 
+This Project shows an sample application on Spring 5 reactive stack with Spring WebFlux. <br>
+It implements the backend for a media mangamement app similar to OneDrive or GoogleDrive with less functionality. It focuses on a good usage of technologies rather than a wide functionality. <br>The backend supports CRUD operations for media, folders, tagging of media and metadata extraction such as a simple user management. There are functional endpoints for each of these functions given in the Router classes. 
 
 ## Setup
 ### Accounts you'll need
