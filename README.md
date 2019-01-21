@@ -27,7 +27,7 @@ okta.apiUrl=${okta.baseUrl}/api/v1
 # users group
 okta.userGroupIds= TODO your_group_ids (if you have groups)
 ```
-You'll find exmaple files in resources. <br> Don't forget to use different DB collections for test and productive usage. 
+You'll find example files in src/(main|test)/resources. Copy example.application.properties to application.properties and adjust it to your needs (okta keys and MongoDB connection string). <br> Don't forget to use different DB collections for test and production usage. 
 
 
 ## Frontend
