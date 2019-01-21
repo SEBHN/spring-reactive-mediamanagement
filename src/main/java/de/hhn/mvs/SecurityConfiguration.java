@@ -29,16 +29,6 @@ public class SecurityConfiguration {
     private static final String FRONTEND_VUE_LOCALHOST_STAGED = "http://localhost:8080";
     private static final String FRONTEND_STAGING = "https://sebhn.github.io";
 
-    @Value("${own.security}")
-    private boolean useOwnSecurity;
-
-    private UserCrudRepo users;
-
-    @Autowired
-    public SecurityConfiguration(UserCrudRepo users) {
-        this.users = users;
-    }
-
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
