@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!", roles = "USER")
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
 public class OktaHandlerTest {
 
     @Autowired
