@@ -52,6 +52,29 @@ public class UserImplTest {
     }
 
     @Test
+    public void testEquals_WithOtherObject_ExpectFalse(){
+        assertFalse(aUser.equals(""));
+    }
+
+    @Test
+    public void testEquals_WithSameObject_ExpectTrue(){
+        assertTrue(aUser.equals(aUser));
+    }
+
+    @Test
+    public void testEquals_WithDifferentEmail_ExpectFalse(){
+        aUserWithAnotherName.setEmail("anotherMail@foo.com");
+        assertFalse(aUser.equals(aUserWithAnotherName));
+    }
+
+    @Test
+    public void testEquals_WithDifferentPassword_ExpectFalse(){
+        aUserWithAnotherName.setName(aUser.getName());
+        aUserWithAnotherName.setPassword("something");
+        assertFalse(aUser.equals(aUserWithAnotherName));
+    }
+
+    @Test
     public void testHashCode_WhenBothAreEquals_ExpectSame(){
         User anotherUser = new UserImpl(aUserWithAnotherName.getEmail(), aUserWithAnotherName.getPassword(), aUserWithAnotherName.getName());
         assertEquals(anotherUser.hashCode(), aUserWithAnotherName.hashCode());
