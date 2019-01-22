@@ -6,9 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @JsonDeserialize(as = UserImpl.class)
-public interface User extends UserDetails {
-
-    String getId();
+public interface User {
 
     String getEmail();
 
@@ -22,16 +20,5 @@ public interface User extends UserDetails {
 
     void setPassword(String password);
 
-    boolean isAdmin();
-
-    String getToken();
-
-    List<String> getRoles();
-
-    void setRoles(List<String> role);
-
     void encodePassword();
-
-
-
 }

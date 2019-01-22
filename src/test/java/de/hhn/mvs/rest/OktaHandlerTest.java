@@ -23,7 +23,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -52,15 +51,10 @@ public class OktaHandlerTest {
     public void setUp() {
         String randomEmail = "oktaHandler" + new Random().nextInt() + "test@junit.org";
         user = new UserImpl(
-                "anId",
-                false,
                 randomEmail,
                 "superSecret123!",
-                "",
-                "OktaHandlerTest",
-                new ArrayList<String>() {{
-            add("ROLE_USER");
-        }});
+                "OktaHandlerTest"
+        );
     }
 
     @After
