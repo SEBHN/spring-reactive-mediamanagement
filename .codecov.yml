@@ -1,0 +1,2 @@
+ignore:
+  - "de/hhn/mvs/MvsApplication"  # ignore spring starter class
