@@ -20,7 +20,7 @@ public class OktaUserTest {
 
     @Before
     public void setUp() {
-        nonOktaUser = new UserImpl("anId", false, "foo@hoo.ch", "foobar", "imunused", "aname", null);
+        nonOktaUser = new UserImpl("foo@hoo.ch", "foobar", "aname");
         oktaUser = OktaUser.create(nonOktaUser, groupIds);
     }
 

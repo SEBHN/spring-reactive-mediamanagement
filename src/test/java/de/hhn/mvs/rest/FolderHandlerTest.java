@@ -26,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureWebTestClient
-@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!", roles = "USER")
+@WithMockUser(username = "junit@hs-heilbronn.de", password = "testingRocks911!")
 public class FolderHandlerTest {
 
     private static final String ANY_USER_ID = "junit@hs-heilbronn.de";

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -21,42 +22,28 @@ public class UserImplTest {
 
     private List<String> userRoles = new ArrayList<>(Arrays.asList(USER_ROLE));
     private User aUser;
-    private User aUserWithRoles;
+    private User aUserWithAnotherName;
 
     @Before
     public void setUp() {
-        aUser = new UserImpl("anId", false, "foo@hoo.ch", "foobar", "imunused", "aname", null);
-        aUserWithRoles = new UserImpl("anId", false, "foo@hoo.ch", "foobar", "imunused", "aname", userRoles);
-    }
-
-    @Test
-    public void testGetAuthorities_WhenPassedNull_ExpectNoAuthorities() {
-        assertTrue(aUser.getRoles().isEmpty());
-        assertTrue(aUser.getAuthorities().isEmpty());
-    }
-
-    @Test
-    public void testGetAuthorities_WhenPassingRole_ExpectRolesAndAuthorities() {
-        assertEquals(1, aUserWithRoles.getAuthorities().size());
-        assertEquals(1, aUserWithRoles.getRoles().size());
-        assertEquals(USER_ROLE, aUserWithRoles.getRoles().get(0));
-        assertEquals(USER_ROLE, aUserWithRoles.getAuthorities().iterator().next().getAuthority());
+        aUser = new UserImpl("foo@hoo.ch", "foobar", "aname");
+        aUserWithAnotherName = new UserImpl("foo@hoo.ch", "foobar", "anotherName");
     }
 
     @Test
     public void testToString(){
-        assertEquals("UserImpl{id='anId', email='foo@hoo.ch', admin=false, token='imunused', name='aname', password='foobar', roles=[ROLE_USER]}", aUserWithRoles.toString());
+        assertEquals("UserImpl{, email='foo@hoo.ch', name='aname', password='foobar'}", aUser.toString());
     }
 
     @Test
     public void testEquals_WhenBothAreEquals_ExpectTrue(){
-        User anotherUser = new UserImpl(aUserWithRoles.getId(), aUserWithRoles.isAdmin(), aUserWithRoles.getEmail(), aUserWithRoles.getPassword(), aUserWithRoles.getToken(), aUserWithRoles.getName(), aUserWithRoles.getRoles());
-        assertEquals(anotherUser, aUserWithRoles);
+        User anotherUser = new UserImpl(aUserWithAnotherName.getEmail(), aUserWithAnotherName.getPassword(), aUserWithAnotherName.getName());
+        assertEquals(anotherUser, aUserWithAnotherName);
     }
 
     @Test
     public void testEquals_WhenNotEquals_ExpectFalse(){
-        assertNotEquals(aUser, aUserWithRoles);
+        assertNotEquals(aUser, aUserWithAnotherName);
     }
 
     @Test
@@ -65,13 +52,36 @@ public class UserImplTest {
     }
 
     @Test
+    public void testEquals_WithOtherObject_ExpectFalse(){
+        assertFalse(aUser.equals(""));
+    }
+
+    @Test
+    public void testEquals_WithSameObject_ExpectTrue(){
+        assertTrue(aUser.equals(aUser));
+    }
+
+    @Test
+    public void testEquals_WithDifferentEmail_ExpectFalse(){
+        aUserWithAnotherName.setEmail("anotherMail@foo.com");
+        assertFalse(aUser.equals(aUserWithAnotherName));
+    }
+
+    @Test
+    public void testEquals_WithDifferentPassword_ExpectFalse(){
+        aUserWithAnotherName.setName(aUser.getName());
+        aUserWithAnotherName.setPassword("something");
+        assertFalse(aUser.equals(aUserWithAnotherName));
+    }
+
+    @Test
     public void testHashCode_WhenBothAreEquals_ExpectSame(){
-        User anotherUser = new UserImpl(aUserWithRoles.getId(), aUserWithRoles.isAdmin(), aUserWithRoles.getEmail(), aUserWithRoles.getPassword(), aUserWithRoles.getToken(), aUserWithRoles.getName(), aUserWithRoles.getRoles());
-        assertEquals(anotherUser.hashCode(), aUserWithRoles.hashCode());
+        User anotherUser = new UserImpl(aUserWithAnotherName.getEmail(), aUserWithAnotherName.getPassword(), aUserWithAnotherName.getName());
+        assertEquals(anotherUser.hashCode(), aUserWithAnotherName.hashCode());
     }
 
     @Test
     public void testHashCode_WhenNotEquals_ExpectFalse(){
-        assertNotEquals(aUser.hashCode(), aUserWithRoles.hashCode());
+        assertNotEquals(aUser.hashCode(), aUserWithAnotherName.hashCode());
     }
 }
