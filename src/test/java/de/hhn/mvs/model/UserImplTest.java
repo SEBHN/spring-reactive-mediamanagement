@@ -84,11 +84,4 @@ public class UserImplTest {
     public void testHashCode_WhenNotEquals_ExpectFalse(){
         assertNotEquals(aUser.hashCode(), aUserWithAnotherName.hashCode());
     }
-
-    @Test
-    public void testEncodePassword(){
-        String plainTextPassword = aUser.getPassword();
-        aUser.encodePassword();
-        assertTrue(PasswordEncoderFactories.createDelegatingPasswordEncoder().matches(plainTextPassword, aUser.getPassword()));
-    }
 }

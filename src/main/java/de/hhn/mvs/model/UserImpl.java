@@ -49,12 +49,6 @@ public final class UserImpl implements User {
         this.password = password;
     }
 
-
-    @Override
-    public void encodePassword(){
-        this.password = PasswordEncoderFactories.createDelegatingPasswordEncoder().encode(this.password);
-    }
-
     @Override
     public String toString() {
         return "UserImpl{" +
