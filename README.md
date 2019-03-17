@@ -31,4 +31,4 @@ You'll find example files in src/(main|test)/resources. Copy example.application
 
 
 ## Frontend
-We have implemented a frontend which uses this api too. It's implemented with Angular 7 and you'll find the code [here](https://github.com/SEBHN/mvs).
+We have implemented a frontend which uses this api too. It's implemented with Angular 7 and you'll find the code [here](https://github.com/SEBHN/angular-mediamanagement).
